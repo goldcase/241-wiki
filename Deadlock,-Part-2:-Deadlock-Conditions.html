@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
+	<link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+</head>
+<body>
+<h2>Coffman conditions</h2>
+<p>There are four <em>necessary</em> and <em>sufficient</em> conditions for deadlock. These are known as the Coffman conditions.</p>
+<ul>
+<li>Mutual Exclusion</li>
+<li>Circular Wait</li>
+<li>Hold and Wait</li>
+<li>No pre-emption</li>
+</ul>
+<p>All of these conditions are required for deadlock, so let's discuss each one in turn. First the easy ones-<br />
+<em> Mutual Exclusion: The resource cannot be shared<br />
+</em> Circular Wait: There exists a cycle in the Resource Allocation Graph. There exists a set of processes {P1,P2,...} such that P1 is waiting for resources held by P2, which is waiting for P3,..., which is waiting for P1.<br />
+<em> Hold and Wait: A process acquires an incomplete set of resources and holds onto them while waiting for the other resources.<br />
+</em> No pre-emption: Once a process has acquired a resource, the resource cannot be taken away from a process and the process will not voluntarily give up a resource.</p>
+<h2>Breaking the Coffman Conditions</h2>
+<p>Two students need a pen and paper:<br />
+<em> The students share a pen and paper. Deadlock is avoided because Mutual Exclusion was not required.<br />
+</em> The students both agree to grab the pen before grabbing the paper. Deadlock is avoided because there cannot be a circular wait.<br />
+<em> The students grab both the pen and paper in one operation ("Get both or get none"). Deadlock is avoided because there is no <em>Hold and Wait</em><br />
+</em> The students are friends and will ask each other to give up a held resource. Deadlock is avoided because pre-emption is allowed.</p>
+<h2>Livelock</h2>
+<p>Livelock is <em>not</em> deadlock-</p>
+<p>Consider the following 'solution'<br />
+* The students will put down one held resource if they are unable to pick up the other resource within 10 seconds. This solution avoids deadlock however it may suffer from livelock.</p>
+<p>Livelock occurs when a process continues to execute but is unable to make progress.<br />
+In practice Livelock may occur because the programmer has taken steps to avoid deadlock. In the above example, in a busy system, the student will continually release the first resource because they are never able to obtain the second resource. The system is not deadlock (the student process is still executing) however it's not making any progress either.</p>
+<h2>Dining Philosophers</h2>
+<p>The Dining Philosophers problem is a classic synchronization problem. Imagine I invite N (let's say 5) philosophers to a meal. We will sit them at a table with 5 chopsticks (one between each philosopher). A philosopher alternates between wanting to eat or think. To eat the philosopher must pick up the two chopsticks either side of their position (the original problem required each philosopher to have two forks). However these chopsticks are shared with his neighbor.</p>
+<p><img alt="5DiningPhilosophers" src="https://raw.githubusercontent.com/wiki/angrave/SystemProgramming/5DiningPhilosophers.png" /></p>
+<p>Is it possible to design an efficient solution such that all philosophers get to eat? Or, will some philosophers starve, never obtaining a second chopstick? Or will all of them deadlock? For example, imagine each guest picks up the chopstick on their left and then waits for the chopstick on their right to be free. Oops - our philosophers have deadlocked!</p>
+    <script src="check_mc.js"></script>
+</body>
+</html>
+</body>
+</html>

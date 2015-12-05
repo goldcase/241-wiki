@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
+	<link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+</head>
+<body>
+<h2>How do I wait for N threads to reach a certain point before continuing onto the next step?</h2>
+<p>Suppose we wanted to perform a multi-threaded calculation that has two stages but we don't want to advance to the second stage until the first stage is completed.</p>
+<p>We could use a synchronization method called a <strong>barrier</strong>. When a thread reaches a barrier, it will wait at the barrier until all the threads reach the barrier, and then they'll all proceed together.  </p>
+<p>Think of it like being out for a hike with some friends.  You agree to wait for each other at the top of each hill (and you make a mental note how many are in your group). Say you're the first one to reach the top of the first hill. You'll wait there at the top for your friends. One by one, they'll arrive at the top, but nobody will continue until the last person in your group arrives.  Once they do, you'll all proceed.</p>
+<p>Pthreads has a function <code>pthread_barrier_wait()</code> that implements this. You'll need to declare a <code>pthread_barrier_t</code> variable and initialize it with <code>pthread_barrier_init()</code>.  <code>pthread_barrier_init()</code> takes the number of threads that will be participating in the barrier as an argument.  <a href="https://github.com/angrave/SystemProgramming/wiki/Sample-program-using-pthread-barriers">Here's an example.</a></p>
+<p>Now let's implement our own barrier and use it to keep all the threads in sync in a large calculation.</p>
+<div class="highlight"><pre><span class="kt">double</span> <span class="n">data</span><span class="p">[</span><span class="mi">256</span><span class="p">][</span><span class="mi">8192</span><span class="p">]</span>
+
+<span class="mi">1</span> <span class="n">Threads</span> <span class="k">do</span> <span class="n">first</span> <span class="n">calculation</span> <span class="p">(</span><span class="n">use</span> <span class="n">and</span> <span class="n">change</span> <span class="n">values</span> <span class="n">in</span> <span class="n">data</span><span class="p">)</span>
+
+<span class="mi">2</span> <span class="n">Barrier</span><span class="o">!</span> <span class="n">Wait</span> <span class="k">for</span> <span class="n">all</span> <span class="n">threads</span> <span class="n">to</span> <span class="n">finish</span> <span class="n">first</span> <span class="n">calculation</span> <span class="n">before</span> <span class="n">continuing</span>
+
+<span class="mi">3</span> <span class="n">Threads</span> <span class="k">do</span> <span class="n">second</span> <span class="n">calculation</span> <span class="p">(</span><span class="n">use</span> <span class="n">and</span> <span class="n">change</span> <span class="n">values</span> <span class="n">in</span> <span class="n">data</span><span class="p">)</span>
+</pre></div>
+
+
+<p>The thread function has four main parts-</p>
+<div class="highlight"><pre><span class="kt">void</span> <span class="o">*</span><span class="nf">calc</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+  <span class="cm">/* Do my part of the first calculation */</span>
+  <span class="cm">/* Am I the last thread to finish? If so wake up all the other threads! */</span>
+  <span class="cm">/* Otherwise wait until the other threads has finished part one */</span>
+  <span class="cm">/* Do my part of the second calculation */</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Our main thread will create the 16 threads and we will divide each calculation into 16 separate pieces.  Each thread will be given a unique value (0,1,2,..15), so it can work on its own block.<br />
+Since a (void*) type can hold small integers, we will pass the value of <code>i</code> by casting it to a void pointer. </p>
+<div class="highlight"><pre><span class="cp">#define N (16)</span>
+<span class="kt">double</span> <span class="n">data</span><span class="p">[</span><span class="mi">256</span><span class="p">][</span><span class="mi">8192</span><span class="p">]</span> <span class="p">;</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">pthread_t</span> <span class="n">ids</span><span class="p">[</span><span class="n">N</span><span class="p">];</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>  
+        <span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ids</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">calc</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span> <span class="n">i</span><span class="p">);</span>
+</pre></div>
+
+
+<p>Note, we will never dereference this pointer value as an actual memory location - we will just cast it straight back to an integer:</p>
+<div class="highlight"><pre><span class="kt">void</span> <span class="o">*</span><span class="nf">calc</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+<span class="c1">// Thread 0 will work on rows 0..15, thread 1 on rows 16..31</span>
+  <span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">start</span> <span class="o">=</span> <span class="n">N</span> <span class="o">*</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">ptr</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">N</span><span class="p">;</span> 
+  <span class="k">for</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">start</span><span class="p">;</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">;</span> <span class="n">x</span><span class="o">++</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="mi">8192</span><span class="p">;</span> <span class="n">y</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span> <span class="cm">/* do calc #1 */</span> <span class="p">}</span>
+</pre></div>
+
+
+<p>After calculation 1 completes we need to wait for the slower threads (unless we are the last thread!).<br />
+So keep track of the number of threads that have arrived at our barrier aka 'checkpoint':</p>
+<div class="highlight"><pre><span class="c1">// Global: </span>
+<span class="kt">int</span> <span class="n">remain</span> <span class="o">=</span> <span class="n">N</span><span class="p">;</span>
+
+
+<span class="c1">// After calc #1 code:</span>
+<span class="n">remain</span><span class="o">--</span><span class="p">;</span> <span class="c1">// We finished</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">remain</span> <span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span><span class="cm">/*I&#39;m last!  -  Time for everyone to wake up! */</span> <span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">remain</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="cm">/* spin spin spin*/</span> <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>However the above code has a race condition (two threads might try to decrement <code>remain</code>) and the loop is a busy loop. We can do better! Let's use a condition variable and then we will use a broadcast/signal functions to wake up the sleeping threads.</p>
+<p>A reminder, that a condition variable is similar to a house! Threads go there to sleep (<code>pthread_cond_wait</code>). You can choose to wake up one thread (<code>pthread_cond_signal</code>) or all of them (<code>pthread_cond_broadcast</code>).  If there are no threads currently waiting then these two calls have no effect.</p>
+<p>A condition variable version is usually very similar to a busy loop incorrect solution - as we will show next. First, let's add a mutex and condition global variables and don't forget to initialize them in <code>main</code> ...</p>
+<div class="highlight"><pre><span class="c1">//global variables</span>
+<span class="kt">pthread_mutex_t</span> <span class="n">m</span><span class="p">;</span>
+<span class="kt">pthread_cond_t</span> <span class="n">cv</span><span class="p">;</span>
+
+<span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">pthread_mutex_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+  <span class="n">pthread_cond_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cv</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+</pre></div>
+
+
+<p>We will use the mutex to ensure that only one thread modifies <code>remain</code> at a time.<br />
+The last arriving thread needs to wake up <em>all</em> sleeping threads - so we will use <code>pthread_cond_broadcast(&amp;cv)</code> not <code>pthread_cond_signal</code></p>
+<div class="highlight"><pre><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+<span class="n">remain</span><span class="o">--</span><span class="p">;</span> 
+<span class="k">if</span> <span class="p">(</span><span class="n">remain</span> <span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="n">pthread_cond_broadcast</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cv</span><span class="p">);</span> <span class="p">}</span>
+<span class="k">else</span> <span class="p">{</span>
+  <span class="k">while</span><span class="p">(</span><span class="n">remain</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="n">pthread_cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cv</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">m</span><span class="p">)</span> <span class="p">}</span>
+<span class="p">}</span>
+<span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+</pre></div>
+
+
+<p>When a thread enters <code>pthread_cond_wait</code> it releases the mutex and sleeps. At some point in the future it will be awoken. Once we bring a thread back from its sleep, before returning it must wait until it can lock the mutex. Notice that even if a sleeping thread wakes up early, it will check the while loop condition and re-enter wait if necessary.</p>
+    <script src="check_mc.js"></script>
+</body>
+</html>
+</body>
+</html>
