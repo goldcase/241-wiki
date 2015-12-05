@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
+	<link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+</head>
+<body>
+<h2>What is a counting semaphore?</h2>
+<p>A counting semaphore contains a value and supports two operations "wait" and "post". Post increments the semaphore and immediately returns. "wait" will wait if the count is zero. If the count is non-zero the semaphore decrements the count and immediately returns.</p>
+<p>An analogy is a count of the cookies in a cookie jar (or gold coins in the treasure chest). Before taking a cookie, call 'wait'. If there are no cookies left then <code>wait</code> will not return: It will <code>wait</code> until another thread increments the semaphore by calling post.</p>
+<p>In short, <code>post</code> increments and immediately returns whereas <code>wait</code> will wait if the count is zero. Before returning it will decrement count.</p>
+<h2>How do I create a semaphore?</h2>
+<p>This page introduces unnamed semaphores. Unfortunately Mac OS X does not support these yet.</p>
+<p>First decide if the initial value should be zero or some other value (e.g. the number of remaining spaces in an array).<br />
+Unlike pthread mutex there are not shortcuts to creating a semaphore - use <code>sem_init</code></p>
+<div class="highlight"><pre><span class="cp">#include &lt;semaphore.h&gt;</span>
+
+<span class="kt">sem_t</span> <span class="n">s</span><span class="p">;</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span> <span class="c1">// returns -1 (=FAILED) on OS X</span>
+  <span class="n">sem_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">);</span> <span class="c1">// Could do this 10 times without blocking</span>
+  <span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">);</span> <span class="c1">// Announce that we&#39;ve finished (and one more resource item is available; increment count)</span>
+  <span class="n">sem_destroy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">);</span> <span class="c1">// release resources of the semaphore</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h2>Can I call wait and post from different threads?</h2>
+<p>Yes! Unlike a mutex, the increment and decrement can be from different threads.</p>
+<h2>Can I use a semaphore instead of a mutex?</h2>
+<p>Yes - though the overhead of a semaphore is greater. To use a semaphore:<br />
+<em> Initialize the semaphore with a count of one.<br />
+</em> Replace <code>...lock</code> with <code>sem_wait</code><br />
+* Replace <code>...unlock</code> with <code>sem_post</code></p>
+<h2>Can I use sem_post inside a signal handler?</h2>
+<p>Yes! <code>sem_post</code> is one of a handful of functions that can be correctly used inside a signal handler.<br />
+This means we can release a waiting thread which can now make all of the calls that we were not<br />
+allowed to call inside the signal handler itself (e.g. <code>printf</code>).</p>
+<div class="highlight"><pre><span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &lt;pthread.h&gt;</span>
+<span class="cp">#include &lt;signal.h&gt;</span>
+<span class="cp">#include &lt;semaphore.h&gt;</span>
+<span class="cp">#include &lt;unistd.h&gt;</span>
+
+<span class="kt">sem_t</span> <span class="n">s</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">handler</span><span class="p">(</span><span class="kt">int</span> <span class="n">signal</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">);</span> <span class="cm">/* Release the Kraken! */</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="o">*</span><span class="nf">singsong</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">param</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">sem_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;I had to wait until your signal released me!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">ok</span> <span class="o">=</span> <span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span> <span class="cm">/* Initial value of zero*/</span><span class="p">);</span> 
+    <span class="k">if</span> <span class="p">(</span><span class="n">ok</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+       <span class="n">perror</span><span class="p">(</span><span class="s">&quot;Could not create unnamed semaphore&quot;</span><span class="p">);</span>
+       <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">signal</span><span class="p">(</span><span class="n">SIGINT</span><span class="p">,</span> <span class="n">handler</span><span class="p">);</span> <span class="c1">// Too simple! See note below</span>
+
+    <span class="kt">pthread_t</span> <span class="n">tid</span><span class="p">;</span>
+    <span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tid</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">singsong</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    <span class="n">pthread_exit</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span> <span class="cm">/* Process will exit when there are no more threads */</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Note robust programs do not use <code>signal()</code> in a multi-threaded program ("The effects of signal() in a multithreaded process are unspecified." - the signal man page); a more correct program will need to use <code>sigaction</code>.</p>
+<h2>How do I find out more?</h2>
+<p>Play using a real linux system! (9/19/14: Linux-In-the-Browser project is missing semaphore.h - this will be fixed in the next update). Read the man pages:<br />
+<em> <a href="http://man7.org/linux/man-pages/man3/sem_init.3.html">sem_init</a><br />
+</em> <a href="http://man7.org/linux/man-pages/man3/sem_wait.3.html">sem_wait</a><br />
+<em> <a href="http://man7.org/linux/man-pages/man3/sem_post.3.html">sem_post</a><br />
+</em> <a href="http://man7.org/linux/man-pages/man3/sem_destroy.3.html">sem_destroy</a></p>
+    <script src="check_mc.js"></script>
+</body>
+</html>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
+	<link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+</head>
+<body>
+<blockquote>
+<p>Question numbers subject to change</p>
+</blockquote>
+<h2>Q1</h2>
+<p>Fill in the blanks to make the following program print 123456789. If <code>cat</code> is given no arguments it simply prints its input until EOF. Bonus: Explain why the <code>close</code> call below is necessary.</p>
+<div class="highlight"><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="k">while</span><span class="p">(</span><span class="o">++</span><span class="n">i</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">pid_t</span> <span class="n">pid</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="cm">/* child */</span>
+      <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">16</span><span class="p">];</span>
+      <span class="n">sprintf</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">______</span><span class="p">,</span><span class="n">i</span><span class="p">);</span>
+      <span class="kt">int</span> <span class="n">fds</span><span class="p">[</span> <span class="n">______</span><span class="p">];</span>
+      <span class="n">pipe</span><span class="p">(</span> <span class="n">fds</span><span class="p">);</span>
+      <span class="n">write</span><span class="p">(</span> <span class="n">fds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">______</span><span class="p">,</span><span class="n">______</span> <span class="p">);</span> <span class="c1">// Write the buffer into the pipe</span>
+      <span class="n">close</span><span class="p">(</span>  <span class="n">______</span> <span class="p">);</span>
+      <span class="n">dup2</span><span class="p">(</span> <span class="n">fds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="n">______</span><span class="p">);</span>
+      <span class="n">execlp</span><span class="p">(</span> <span class="s">&quot;cat&quot;</span><span class="p">,</span> <span class="s">&quot;cat&quot;</span><span class="p">,</span>  <span class="n">______</span> <span class="p">);</span>
+      <span class="n">perror</span><span class="p">(</span><span class="s">&quot;exec&quot;</span><span class="p">);</span> <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">waitpid</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h2>Q2</h2>
+<p>Use POSIX calls <code>fork</code> <code>pipe</code> <code>dup2</code> and <code>close</code> to implement an autograding program. Capture the standardoutput of a child process into a pipe. The child process should <code>exec</code> the program <code>./test</code> with no additional arguments (other than the process name). In the parent process read from the pipe: Exit the parent process as soon as the captured output contains the ! character. Before exiting the parent process send SIGKILL to the child process. Exit 0 if the output contained a !. Otherwise if the child process exits causing the pipe write end to be closed, then exit with a value of 1. Be sure to close the unused ends of the pipe in the parent and child process</p>
+<h2>Q3 (Advanced)</h2>
+<p>This advanced challenge uses pipes to get an "AI player" to play itself until the game is complete.<br />
+The program <code>tictactoe</code> accepts a line of input - the sequence of turns made so far, prints the same sequence followed by another turn, and then exits. A turn is specified using two characters. For example "A1" and "C3" are two opposite corner positions. The string <code>B2A1A3</code> is a game of 3 turns/plys. A valid response is <code>B2A1A3C1</code> (the C1 response blocks the diagonal B2 A3 threat). The output line may also include a suffix <code>-I win</code> <code>-You win</code> <code>-invalid</code> or <code>-draw</code><br />
+Use pipes to control the input and output of each child process created. When the output contains a <code>-</code>, print the final output line (the entire game sequence and the result) and exit.</p>
+    <script src="check_mc.js"></script>
+</body>
+</html>
+</body>
+</html>
