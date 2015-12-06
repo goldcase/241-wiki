@@ -10,7 +10,7 @@
 <p>What common mistakes do C programmers make?</p>
 <h1>Memory mistakes</h1>
 <h2>String constants are constant</h2>
-<div class="highlight"><pre><span class="kt">char</span> <span class="n">array</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&quot;Hi!&quot;</span><span class="p">;</span> <span class="c1">// array contains a mutable copy</span>
+<div class="highlight"><pre><span class="kt">char</span> <span class="n">array</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&quot;Hi!&quot;</span><span class="p">;</span> <span class="c1">// array contains a mutable copy </span>
 <span class="n">strcpy</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="s">&quot;OK&quot;</span><span class="p">);</span>
 
 <span class="kt">char</span> <span class="o">*</span><span class="n">ptr</span> <span class="o">=</span> <span class="s">&quot;Can&#39;t change me&quot;</span><span class="p">;</span> <span class="c1">// ptr points to some immutable memory</span>
@@ -66,7 +66,7 @@ After the function returns it is an error to continue to use the memory.</p>
 </pre></div>
 
 
-<p>In the above example, we needed to allocate enough bytes for the struct. Instead we allocated enough bytes to hold a pointer. Once we start using the user pointer we will corrupt memory. Correct code is show bellow.</p>
+<p>In the above example, we needed to allocate enough bytes for the struct. Instead we allocated enough bytes to hold a pointer. Once we start using the user pointer we will corrupt memory. Correct code is show below.</p>
 <div class="highlight"><pre><span class="k">struct</span> <span class="n">User</span> <span class="p">{</span>
    <span class="kt">char</span> <span class="n">name</span><span class="p">[</span><span class="mi">100</span><span class="p">];</span>
 <span class="p">};</span>
