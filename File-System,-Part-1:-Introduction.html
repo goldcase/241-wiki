@@ -85,7 +85,7 @@
 <p>The maximum disk size is 4KB *2^32 = 16TB  (remember 2^10 = 1024)</p>
 <p>A disk block can store 4KB / 4B (each pointer needs to be 32 bits) = 1024 pointers. Each pointer refers to a 4KB disk block - so you can refer up to 1024*4KB = 4MB of data</p>
 <p>For the same disk configuration, a double indirect block stores 1024 pointers to 1024 indirection tables. Thus a double-indirect block can refer up to 1024 * 4MB = 4GB of data.</p>
-<p>Similarly a triple indirect block can refer up to 4TB of data.</p>
+<p>Similarly, a triple indirect block can refer up to 4TB of data.</p>
 <p><a href="https://github.com/angrave/SystemProgramming/wiki/File-System,-Part-2:-Files-are-inodes-(everything-else-is-just-data...)">Go to File System: Part 2</a></p>
     <script src="check_mc.js"></script>
 </body>
