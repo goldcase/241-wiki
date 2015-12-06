@@ -5,6 +5,8 @@ $(".choice").on("click", function() {
 
     if (window[question_id].answer === choice_text) {
         $(this).addClass("pure-button-primary");
+        var exp_id = "#exp" + question_id;
+        $(exp_id).html(formatAnswer(window[question_id].explanation));
     }
 });
 
