@@ -78,12 +78,12 @@ When a system call fails it will typically return -1 to indicate an error and se
 <h2>What are the gotchas and best practices of using <code>errno</code>?</h2>
 <p>Be careful when complex error handling use of library calls or system calls that may change the value of <code>errno</code>. In practice it's safer to copy the value of errno into a int variable:</p>
 <pre class="highlight"><code class="language-C">// Unsafe - the first fprintf may change the value of errno before we use it!
-if (-1 == sem_wait(&amp;s)) {
+if (-1 == sem_wait(&amp;amp;s)) {
    fprintf(stderr, &quot;An error occurred!&quot;);
    fprintf(stderr, &quot;The error value is %d\n&quot;, errno);
 }
 // Better, copy the value before making more system and library calls
-if (-1 == sem_wait(&amp;s)) {
+if (-1 == sem_wait(&amp;amp;s)) {
    int errno_saved = errno;
    fprintf(stderr, &quot;An error occurred!&quot;);
    fprintf(stderr, &quot;The error value is %d\n&quot;, errno_saved);
@@ -116,11 +116,11 @@ fprintf(stderr, &quot;An error occurred (errno=%d): %s&quot;, errno, mesg);</cod
 <h2>What are the gotchas of using strerror?</h2>
 <p>Unfortunately <code>strerror</code> is not threadsafe. In other words, two threads cannot call it at the same time!</p>
 <p>There are two workarounds: Firstly we can use a mutex lock to define a critical section and a local buffer. The same mutex should be used by all threads in all places that call <code>strerror</code></p>
-<pre class="highlight"><code class="language-C">pthread_mutex_lock(&amp;m);
+<pre class="highlight"><code class="language-C">pthread_mutex_lock(&amp;amp;m);
 char *result = strerror(errno);
 char *message = malloc(strlen(result) + 1);
 strcpy(message, result);
-pthread_mutex_unlock(&amp;m);
+pthread_mutex_unlock(&amp;amp;m);
 fprintf(stderr, &quot;An error occurred (errno=%d): %s&quot;, errno, message);
 free(message);</code></pre>
 
@@ -129,12 +129,12 @@ free(message);</code></pre>
 <h2>What is EINTR? What does it mean for sem_wait? read? write?</h2>
 <p>Some system calls can be interrupted when a signal (e.g SIGCHLD, SIGPIPE,...) is delivered to the process. At this point the system call may return without performing any action! For example, bytes may not have been read/written, semaphore wait may not have waited.</p>
 <p>This interruption can be detected by checking the return value and if <code>errno</code> is EINTR. In which case the system call should be retried. It's common to see the following kind of loop that wraps a system call (such as sem_wait).</p>
-<pre class="highlight"><code class="language-C">while ((-1 == systemcall(...)) &amp;&amp; (errno == EINTR)) { /* repeat! */}</code></pre>
+<pre class="highlight"><code class="language-C">while ((-1 == systemcall(...)) &amp;amp;&amp;amp; (errno == EINTR)) { /* repeat! */}</code></pre>
 
 
 <p>Be careful to write <code>== EINTR</code>, not <code>= EINTR</code>.</p>
 <p>Or, if the result value needs to be used later...</p>
-<pre class="highlight"><code class="language-C">while ((-1 == (result = systemcall(...))) &amp;&amp; (errno == EINTR)) { /* repeat! */}</code></pre>
+<pre class="highlight"><code class="language-C">while ((-1 == (result = systemcall(...))) &amp;amp;&amp;amp; (errno == EINTR)) { /* repeat! */}</code></pre>
 
 
 <p>On Linux,calling <code>read</code> and <code>write</code> to a local disk will normally not return with EINTR (instead the function is automatically restarted for you). However, calling <code>read</code> and <code>write</code> on a file descriptor that corresponds to a network stream <em>can</em> return with EINTR.</p>

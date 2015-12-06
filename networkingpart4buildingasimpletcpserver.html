@@ -99,14 +99,14 @@ Typical values for a high performance server are 128 or more.</p>
 <p>Note, ports are per machine- not per process or per user. In other words,  you cannot use port 1234 while another process is using that port. Worse, ports are by default 'tied up' after a process has finished.</p>
 <h2>Server code example</h2>
 <p>A working simple server example is shown below. Note this example is incomplete - for example it does not close either socket descriptor, or free up memory created by <code>getaddrinfo</code></p>
-<pre class="highlight"><code class="language-C">#include &lt;string.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;sys/types.h&gt;
-#include &lt;sys/socket.h&gt;
-#include &lt;netdb.h&gt;
-#include &lt;unistd.h&gt;
-#include &lt;arpa/inet.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;string.h&amp;gt;
+#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;stdlib.h&amp;gt;
+#include &amp;lt;sys/types.h&amp;gt;
+#include &amp;lt;sys/socket.h&amp;gt;
+#include &amp;lt;netdb.h&amp;gt;
+#include &amp;lt;unistd.h&amp;gt;
+#include &amp;lt;arpa/inet.h&amp;gt;
 
 int main(int argc, char **argv)
 {
@@ -114,18 +114,18 @@ int main(int argc, char **argv)
     int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     struct addrinfo hints, *result;
-    memset(&amp;hints, 0, sizeof(struct addrinfo));
+    memset(&amp;amp;hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
-    s = getaddrinfo(NULL, &quot;1234&quot;, &amp;hints, &amp;result);
+    s = getaddrinfo(NULL, &quot;1234&quot;, &amp;amp;hints, &amp;amp;result);
     if (s != 0) {
             fprintf(stderr, &quot;getaddrinfo: %s\n&quot;, gai_strerror(s));
             exit(1);
     }
 
-    if (bind(sock_fd, result-&gt;ai_addr, result-&gt;ai_addrlen) != 0) {
+    if (bind(sock_fd, result-&amp;gt;ai_addr, result-&amp;gt;ai_addrlen) != 0) {
         perror(&quot;bind()&quot;);
         exit(1);
     }
@@ -135,8 +135,8 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    struct sockaddr_in *result_addr = (struct sockaddr_in *) result-&gt;ai_addr;
-    printf(&quot;Listening on file descriptor %d, port %d\n&quot;, sock_fd, ntohs(result_addr-&gt;sin_port));
+    struct sockaddr_in *result_addr = (struct sockaddr_in *) result-&amp;gt;ai_addr;
+    printf(&quot;Listening on file descriptor %d, port %d\n&quot;, sock_fd, ntohs(result_addr-&amp;gt;sin_port));
 
     printf(&quot;Waiting for connection...\n&quot;);
     int client_fd = accept(sock_fd, NULL, NULL);
@@ -158,7 +158,7 @@ int main(int argc, char **argv)
 <p>By default a port is not immediately released when the socket is closed. Instead, the port enters a "TIMED-WAIT" state. This can lead to significant confusion during development because the timeout can make valid networking code appear to fail.</p>
 <p>To be able to immediately re-use a port, specify <code>SO_REUSEPORT</code> before binding to the port.</p>
 <pre class="highlight"><code class="language-C">int optval = 1;
-setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, &amp;optval, sizeof(optval));
+setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, &amp;amp;optval, sizeof(optval));
 
 bind(....</code></pre>
 

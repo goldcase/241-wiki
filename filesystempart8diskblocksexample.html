@@ -93,7 +93,7 @@ block[MAX_BLOCK] blocks;</code></pre>
 
 <p>Now we can work out how to read a byte at offset <code>position</code> of our file:</p>
 <pre class="highlight"><code class="language-C">char readbyte(inode*inode,long position) {
-  if(position &lt;0 || position &gt;= inode-&gt;size) return -1; // invalid offset
+  if(position &amp;lt;0 || position &amp;gt;= inode-&amp;gt;size) return -1; // invalid offset
 
   int  block_count = position / 4096,offset = position % 4096;
 
@@ -101,7 +101,7 @@ block[MAX_BLOCK] blocks;</code></pre>
   int physical_idx = lookup_physical_block_index(inode, block_count );
 
   // sanity check that the disk block index is reasonable...
-  assert(physical_idx &gt;=0 &amp;&amp; physical_idx &lt; MAX_BLOCK);
+  assert(physical_idx &amp;gt;=0 &amp;amp;&amp;amp; physical_idx &amp;lt; MAX_BLOCK);
 
 
   // read the disk block from our virtual disk 'blocks' and return the specific byte
@@ -111,16 +111,16 @@ block[MAX_BLOCK] blocks;</code></pre>
 
 <p>Our initial version of lookup_physical_block is simple - we can use our table of 10 direct blocks!</p>
 <pre class="highlight"><code class="language-C">int lookup_physical_block_index(inode*inode, int block_count) {
-  assert(block_count&gt;=0 &amp;&amp; block_count &lt; 10);
+  assert(block_count&amp;gt;=0 &amp;amp;&amp;amp; block_count &amp;lt; 10);
 
-  return inode-&gt;directblocks[ block_count ]; // returns an index value between [0,MAX_BLOCK)
+  return inode-&amp;gt;directblocks[ block_count ]; // returns an index value between [0,MAX_BLOCK)
 }</code></pre>
 
 
 <p>This simple representation is reasonable provided we can represent all possible files with just ten blocks i.e. upto 40KB. What about larger files? We need the inode struct to always be the same size so just increasing the existing direct block array to 20 would roughly double the size of our inodes. If most of our files require less than 10 blocks, then our inode storage is now wasteful. To solve this problem we will use a disk block calledn the <em>indirect block</em> to extend the array of pointers at our disposal. We will only need this for files &gt; 40KB</p>
 <pre class="highlight"><code class="language-C">struct inode {
- int[10] directblocks; // if size&lt;4KB then only the first one is valid
- int indirectblock; // valid value when size &gt;= 40KB
+ int[10] directblocks; // if size&amp;lt;4KB then only the first one is valid
+ int indirectblock; // valid value when size &amp;gt;= 40KB
  int size;
  ...
 }</code></pre>
@@ -129,13 +129,13 @@ block[MAX_BLOCK] blocks;</code></pre>
 <p>The indirect block is just a regular disk block of 4096 bytes but we will use it to hold pointers to disk blocks. Our pointers in this case are just integers, so we need to cast the pointer to an integer pointer:</p>
 <pre class="highlight"><code class="language-C">int lookup_physical_block_index(inode*inode, int block_count) {
   assert(sizeof(int)==4); // Warning this code assumes an index is 4 bytes!
-  assert(block_count&gt;=0 &amp;&amp; block_count &lt; 1024 + 10); // 0 &lt;= block_count&lt; 1034
+  assert(block_count&amp;gt;=0 &amp;amp;&amp;amp; block_count &amp;lt; 1024 + 10); // 0 &amp;lt;= block_count&amp;lt; 1034
 
-  if( block_count &lt; 10)
-     return inode-&gt;directblocks[ block_count ];
+  if( block_count &amp;lt; 10)
+     return inode-&amp;gt;directblocks[ block_count ];
 
   // read the indirect block from disk:
-  block_t* oneblock = &amp; blocks[ inode-&gt;indirectblock ];
+  block_t* oneblock = &amp;amp; blocks[ inode-&amp;gt;indirectblock ];
 
   // Treat the 4KB as an array of 1024 pointers to other disk blocks
   int* table = (int*) oneblock;
@@ -153,22 +153,22 @@ This means our indirect block can refer to 1024 * 4KB = 4MB of data. With the fi
 <p><img alt="inode disk blocks for data" src="http://uw714doc.sco.com/en/FS_admin/graphics/s5chain.gif" /></p>
 <p>(source: <a href="http://uw714doc.sco.com/en/FS_admin/graphics/s5chain.gif">http://uw714doc.sco.com/en/FS_admin/graphics/s5chain.gif</a>)</p>
 <pre class="highlight"><code class="language-C">int lookup_physical_block_index(inode*inode, int block_count) {
-  if( block_count &lt; 10)
-     return inode-&gt;directblocks[ block_count ];
+  if( block_count &amp;lt; 10)
+     return inode-&amp;gt;directblocks[ block_count ];
 
   // Use indirect block for the next 1024 blocks:
   // Assumes 1024 ints can fit inside each block!
-  if( block_count &lt; 1024 + 10) {   
-      int* table = (int*) &amp; blocks[ inode-&gt;indirectblock ];
+  if( block_count &amp;lt; 1024 + 10) {   
+      int* table = (int*) &amp;amp; blocks[ inode-&amp;gt;indirectblock ];
       return table[ block_count - 10 ];
   }
   // For huge files we will use a table of tables
   int i = (block_count - 1034) / 1024 , j = (block_count - 1034) % 1024;
-  assert(i&lt;1024); // triple-indirect is not implemented here!
+  assert(i&amp;lt;1024); // triple-indirect is not implemented here!
 
-  int* table1 = (int*) &amp; blocks[ inode-&gt;doubleindirectblock ];
+  int* table1 = (int*) &amp;amp; blocks[ inode-&amp;gt;doubleindirectblock ];
    // The first table tells us where to read the second table ...
-  int* table2 = (int*) &amp; blocks[   table1[i]   ];
+  int* table2 = (int*) &amp;amp; blocks[   table1[i]   ];
   return table2[j];
 
    // For gigantic files we will need to implement triple-indirect (table of tables of tables)

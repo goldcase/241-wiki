@@ -97,7 +97,7 @@ void *dequeue() { /* Remove one item to the end of the queue.*/
 
 <p>This method would appear to work (pass simple tests etc) but contains a subtle bug. With enough enqueue operations (a bit more than two billion) the int value of <code>in</code> will overflow and become negative! The modulo (or 'remainder') operator <code>%</code> preserves the sign. Thus you might end up writing into <code>b[-14]</code>  for example! </p>
 <p>A compact form is correct uses bit masking provided N is 2^x (16,32,64,...)</p>
-<pre class="highlight"><code class="language-C">b[ (in++) &amp; (N-1) ] = value;</code></pre>
+<pre class="highlight"><code class="language-C">b[ (in++) &amp;amp; (N-1) ] = value;</code></pre>
 
 
 <p>This buffer does not yet prevent buffer underflow or overflow. For that, we'll turn to our multi-threaded attempt that will block a thread until there is space or there is at least one item to remove.</p>
@@ -109,29 +109,29 @@ int in = 0, out = 0
 p_m_t lock
 sem_t s1,s2
 void init() { 
-    p_m_init(&amp;lock, NULL)
-    sem_init(&amp;s1, 0, 16)
-    sem_init(&amp;s2, 0, 0)
+    p_m_init(&amp;amp;lock, NULL)
+    sem_init(&amp;amp;s1, 0, 16)
+    sem_init(&amp;amp;s2, 0, 0)
 }
 
 enqueue(void *value) {
-    p_m_lock(&amp;lock)
+    p_m_lock(&amp;amp;lock)
 
     // Hint: Wait while zero. Decrement and return
-    sem_wait( &amp;s1 ) 
+    sem_wait( &amp;amp;s1 ) 
 
-    b[ (in++) &amp; (N-1) ] = value
+    b[ (in++) &amp;amp; (N-1) ] = value
 
     // Hint: Increment. Will wake up a waiting thread 
-    sem_post(&amp;s1) 
-    p_m_unlock(&amp;lock)
+    sem_post(&amp;amp;s1) 
+    p_m_unlock(&amp;amp;lock)
 }
 void *dequeue(){
-    p_m_lock(&amp;lock)
-    sem_wait(&amp;s2)
-    void *result = b[(out++) &amp; 15]
-    sem_post(&amp;s2)
-    p_m_unlock(&amp;lock)
+    p_m_lock(&amp;amp;lock)
+    sem_wait(&amp;amp;s2)
+    void *result = b[(out++) &amp;amp; 15]
+    sem_post(&amp;amp;s2)
+    p_m_unlock(&amp;amp;lock)
     return result
 }</code></pre>
 
@@ -152,27 +152,27 @@ int in = 0, out = 0
 p_m_t lock
 sem_t s1, s2
 void init() {
-    sem_init(&amp;s1,0,16)
-    sem_init(&amp;s2,0,0)
+    sem_init(&amp;amp;s1,0,16)
+    sem_init(&amp;amp;s2,0,0)
 }
 
 enqueue(void *value){
 
- sem_wait(&amp;s2)
- p_m_lock(&amp;lock)
+ sem_wait(&amp;amp;s2)
+ p_m_lock(&amp;amp;lock)
 
- b[ (in++) &amp; (N-1) ] = value
+ b[ (in++) &amp;amp; (N-1) ] = value
 
- p_m_unlock(&amp;lock)
- sem_post(&amp;s1)
+ p_m_unlock(&amp;amp;lock)
+ sem_post(&amp;amp;s1)
 }
 
 void *dequeue(){
-  sem_wait(&amp;s1)
-  p_m_lock(&amp;lock)
-  void *result = b[(out++) &amp; 15]
-  p_m_unlock(&amp;lock)
-  sem_post(&amp;s2)
+  sem_wait(&amp;amp;s1)
+  p_m_lock(&amp;amp;lock)
+  void *result = b[(out++) &amp;amp; 15]
+  p_m_unlock(&amp;amp;lock)
+  sem_post(&amp;amp;s2)
 
   return result;
 }</code></pre>
@@ -187,8 +187,8 @@ void *dequeue(){
 <h2>Correct implementation of a ring buffer</h2>
 <p>The pseudo-code (<code>pthread_mutex</code> shortened to <code>p_m</code> etc) is shown below.</p>
 <p>As the mutex lock is stored in global (static) memory it can be initialized with  <code>PTHREAD_MUTEX_INITIALIZER</code>.If we had allocated space for the mutex on the heap, then we would have used <code>pthread_mutex_init(ptr, NULL)</code></p>
-<pre class="highlight"><code class="language-C">#include &lt;pthread.h&gt;
-#include &lt;semaphore.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;pthread.h&amp;gt;
+#include &amp;lt;semaphore.h&amp;gt;
 // N must be 2^i
 #define N (16)
 
@@ -198,8 +198,8 @@ p_m_t lock = PTHREAD_MUTEX_INITIALIZER
 sem_t countsem, spacesem
 
 void init() {
-  sem_init(&amp;countsem, 0, 0)
-  sem_init(&amp;spacesem, 0, 16)
+  sem_init(&amp;amp;countsem, 0, 0)
+  sem_init(&amp;amp;spacesem, 0, 16)
 }</code></pre>
 
 
@@ -208,28 +208,28 @@ void init() {
 </em> A complete implementation would need to guard against early returns from <code>sem_wait</code> due to POSIX signals.</p>
 <pre class="highlight"><code class="language-C">enqueue(void *value){
  // wait if there is no space left:
- sem_wait( &amp;spacesem )
+ sem_wait( &amp;amp;spacesem )
 
- p_m_lock(&amp;lock)
- b[ (in++) &amp; (N-1) ] = value
- p_m_unlock(&amp;lock)
+ p_m_lock(&amp;amp;lock)
+ b[ (in++) &amp;amp; (N-1) ] = value
+ p_m_unlock(&amp;amp;lock)
 
  // increment the count of the number of items
- sem_post(&amp;countsem)
+ sem_post(&amp;amp;countsem)
 }</code></pre>
 
 
 <p>The <code>dequeue</code> implementation is shown below. Notice the symmetry of the synchronization calls to <code>enqueue</code>. In both cases the functions first wait if the count of spaces or count of items is zero.</p>
 <pre class="highlight"><code class="language-C">void *dequeue(){
   // Wait if there are no items in the buffer
-  sem_wait(&amp;countsem)
+  sem_wait(&amp;amp;countsem)
 
-  p_m_lock(&amp;lock)
-  void *result = b[(out++) &amp; (N-1)]
-  p_m_unlock(&amp;lock)
+  p_m_lock(&amp;amp;lock)
+  void *result = b[(out++) &amp;amp; (N-1)]
+  p_m_unlock(&amp;amp;lock)
 
   // Increment the count of the number of spaces
-  sem_post(&amp;spacesem)
+  sem_post(&amp;amp;spacesem)
 
   return result
 }</code></pre>

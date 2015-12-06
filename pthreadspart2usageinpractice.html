@@ -82,8 +82,8 @@ An alternative implementation is to use a boolean (int) variable whose value is 
 <p>Calling <code>pthread_exit</code> in the the <code>main</code> thread is a common way for simple programs to ensure that all threads finish. For example, in the following program, the  <code>myfunc</code> threads will probably not have time to get started.</p>
 <pre class="highlight"><code class="language-C">int main() {
   pthread_t tid1, tid2;
-  pthread_create(&amp;tid1, NULL, myfunc, &quot;Jabberwocky&quot;);
-  pthread_create(&amp;tid2, NULL, myfunc, &quot;Vorpel&quot;);
+  pthread_create(&amp;amp;tid1, NULL, myfunc, &quot;Jabberwocky&quot;);
+  pthread_create(&amp;amp;tid2, NULL, myfunc, &quot;Vorpel&quot;);
   exit(42); //or return 42;
 
   // No code is run after exit
@@ -93,8 +93,8 @@ An alternative implementation is to use a boolean (int) variable whose value is 
 <p>The next two programs will wait for the new threads to finish-</p>
 <pre class="highlight"><code class="language-C">int main() {
   pthread_t tid1, tid2;
-  pthread_create(&amp;tid1, NULL, myfunc, &quot;Jabberwocky&quot;);
-  pthread_create(&amp;tid2, NULL, myfunc, &quot;Vorpel&quot;);
+  pthread_create(&amp;amp;tid1, NULL, myfunc, &quot;Jabberwocky&quot;);
+  pthread_create(&amp;amp;tid2, NULL, myfunc, &quot;Vorpel&quot;);
   pthread_exit(NULL); 
 
   // No code is run after pthread_exit
@@ -105,12 +105,12 @@ An alternative implementation is to use a boolean (int) variable whose value is 
 <p>Alternatively, we join on each thread (i.e. wait for it to finish) before we return from main (or call exit).</p>
 <pre class="highlight"><code class="language-C">int main() {
   pthread_t tid1, tid2;
-  pthread_create(&amp;tid1, NULL, myfunc, &quot;Jabberwocky&quot;);
-  pthread_create(&amp;tid2, NULL, myfunc, &quot;Vorpel&quot;);
+  pthread_create(&amp;amp;tid1, NULL, myfunc, &quot;Jabberwocky&quot;);
+  pthread_create(&amp;amp;tid2, NULL, myfunc, &quot;Vorpel&quot;);
   // wait for both threads to finish :
   void* result;
-  pthread_join(tid1, &amp;result);
-  pthread_join(tid2, &amp;result); 
+  pthread_join(tid1, &amp;amp;result);
+  pthread_join(tid2, &amp;amp;result); 
   return 42;
 }</code></pre>
 
@@ -138,7 +138,7 @@ In practice, this is only an issue for long-runnning processes but is not an iss
 <pre class="highlight"><code>pthread start_threads() {
   int start = 42;
   pthread_t tid;
-  pthread_create(&amp;tid, 0, myfunc, &amp;start); // ERROR!
+  pthread_create(&amp;amp;tid, 0, myfunc, &amp;amp;start); // ERROR!
   return tid;
 }</code></pre>
 
@@ -149,15 +149,15 @@ In practice, this is only an issue for long-runnning processes but is not an iss
   int start = 42;
   void *result;
   pthread_t tid;
-  pthread_create(&amp;tid, 0, myfunc, &amp;start); // OK - start will be valid!
-  pthread_join(tid, &amp;result);
+  pthread_create(&amp;amp;tid, 0, myfunc, &amp;amp;start); // OK - start will be valid!
+  pthread_join(tid, &amp;amp;result);
 }</code></pre>
 
 
 <h2>How can I create ten threads with different starting values.</h2>
 <p>The following code is supposed to start ten threads with values 0,1,2,3,...9<br />
 However, when run prints out <code>1 7 8 8 8 8 8 8 8 10</code>! Can you see why?</p>
-<pre class="highlight"><code class="language-C">#include &lt;pthread.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;pthread.h&amp;gt;
 void* myfunc(void* ptr) {
     int i = *((int *) ptr);
     printf(&quot;%d &quot;, i);
@@ -168,8 +168,8 @@ int main() {
     // Each thread gets a different value of i to process
     int i;
     pthread_t tid;
-    for(i =0; i &lt; 10; i++) {
-        pthread_create(&amp;tid, NULL, myfunc, &amp;i); // ERROR
+    for(i =0; i &amp;lt; 10; i++) {
+        pthread_create(&amp;amp;tid, NULL, myfunc, &amp;amp;i); // ERROR
     }
     pthread_exit(NULL);
 }</code></pre>
@@ -189,14 +189,14 @@ int main() {
 
 
 <p>And each array element passed to each thread - </p>
-<pre class="highlight"><code>pthread_create(&amp;info[i].id, NULL, func, &amp;info[i]);</code></pre>
+<pre class="highlight"><code>pthread_create(&amp;amp;info[i].id, NULL, func, &amp;amp;info[i]);</code></pre>
 
 
 <h2>Why are some functions e.g.  asctime,getenv, strtok, strerror  not thread-safe?</h2>
 <p>To answer this, let's look at a simple function that is also not 'thread-safe'</p>
 <pre class="highlight"><code class="language-C">char *to_message(int num) {
     char static result [256];
-    if (num &lt; 10) sprintf(result, &quot;%d : blah blah&quot; , num);
+    if (num &amp;lt; 10) sprintf(result, &quot;%d : blah blah&quot; , num);
     else strcpy(result, &quot;Unknown&quot;);
     return result;
 }</code></pre>
@@ -236,9 +236,9 @@ Also, creating a thread is significantly faster than creating(forking) a process
 <p>Yes! No- isolation! As threads live inside the same process, one thread has access to the same virtual memory as the other threads. A single thread can terminate the entire process (e.g. by trying to read address zero).</p>
 <h2>Can you fork a process with multiple threads?</h2>
 <p>Yes! However the child process only has a single thread (which is a clone of the thread that called <code>fork</code>. We can see this as a simple example, where the background threads never print out a second message in the child process.</p>
-<pre class="highlight"><code class="language-C">#include &lt;pthread.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;unistd.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;pthread.h&amp;gt;
+#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;unistd.h&amp;gt;
 
 static pid_t child = -2;
 
@@ -253,8 +253,8 @@ void *sleepnprint(void *arg) {
 }
 int main() {
   pthread_t tid1, tid2;
-  pthread_create(&amp;tid1,NULL, sleepnprint, &quot;New Thread One&quot;);
-  pthread_create(&amp;tid2,NULL, sleepnprint, &quot;New Thread Two&quot;);
+  pthread_create(&amp;amp;tid1,NULL, sleepnprint, &quot;New Thread One&quot;);
+  pthread_create(&amp;amp;tid2,NULL, sleepnprint, &quot;New Thread Two&quot;);
 
   child = fork();
   printf(&quot;%d:%s\n&quot;,getpid(), &quot;fork()ing complete&quot;);

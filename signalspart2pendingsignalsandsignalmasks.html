@@ -114,17 +114,17 @@ SIG_SETMASK: The set of blocked signals is set to the argument set.</code></pre>
 <p>The sigset type behaves as a bitmap, except functions are used rather than explicitly setting and unsetting bits using &amp; and |. </p>
 <p>It is a common error to forget to initialize the signal set before modifying one bit. For example,</p>
 <pre class="highlight"><code class="language-C">sigset_t set, oldset;
-sigaddset(&amp;set, SIGINT); // Ooops!
-sigprocmask(SIG_SETMASK, &amp;set, &amp;oldset)</code></pre>
+sigaddset(&amp;amp;set, SIGINT); // Ooops!
+sigprocmask(SIG_SETMASK, &amp;amp;set, &amp;amp;oldset)</code></pre>
 
 
 <p>Correct code initializes the set to be all on or all off. For example,</p>
-<pre class="highlight"><code class="language-C">sigfillset(&amp;set); // all signals
-sigprocmask(SIG_SETMASK, &amp;set, NULL); // Block all the signals!
+<pre class="highlight"><code class="language-C">sigfillset(&amp;amp;set); // all signals
+sigprocmask(SIG_SETMASK, &amp;amp;set, NULL); // Block all the signals!
 // (Actually SIGKILL or SIGSTOP cannot be blocked...)
 
-sigemptyset(&amp;set); // no signals 
-sigprocmask(SIG_SETMASK, &amp;set, NULL); // set the mask to be empty again</code></pre>
+sigemptyset(&amp;amp;set); // no signals 
+sigprocmask(SIG_SETMASK, &amp;amp;set, NULL); // set the mask to be empty again</code></pre>
 
 
 <h2>How do I block signals in a multi-threaded program?</h2>
@@ -132,19 +132,19 @@ sigprocmask(SIG_SETMASK, &amp;set, NULL); // set the mask to be empty again</cod
 <em> Use pthread_sigmask instead of sigprocmask<br />
 </em> Block a signal in all threads to prevent its asynchronous delivery</p>
 <p>The easiest method to ensure a signal is blocked in all threads is to set the signal mask in the main thread before new threads are created</p>
-<pre class="highlight"><code class="language-C">sigemptyset(&amp;set);
-sigaddset(&amp;set, SIGQUIT);
-sigaddset(&amp;set, SIGINT);
-pthread_sigmask(SIG_BLOCK, &amp;set, NULL);
+<pre class="highlight"><code class="language-C">sigemptyset(&amp;amp;set);
+sigaddset(&amp;amp;set, SIGQUIT);
+sigaddset(&amp;amp;set, SIGINT);
+pthread_sigmask(SIG_BLOCK, &amp;amp;set, NULL);
 
 // this thread and the new thread will block SIGQUIT and SIGINT
-pthread_create(&amp;thread_id, NULL, myfunc, funcparam);</code></pre>
+pthread_create(&amp;amp;thread_id, NULL, myfunc, funcparam);</code></pre>
 
 
 <p>Just as we saw with sigprocmask, pthread_sigmask includes a 'how' parameter that defines how the signal set is to be used:</p>
-<pre class="highlight"><code class="language-C">pthread_sigmask(SIG_SETMASK, &amp;set, NULL) - replace the thread's mask with given signal set
-pthread_sigmask(SIG_BLOCK, &amp;set, NULL) - add the signal set to the thread's mask
-pthread_sigmask(SIG_UNBLOCK, &amp;set, NULL) - remove the signal set from the thread's mask</code></pre>
+<pre class="highlight"><code class="language-C">pthread_sigmask(SIG_SETMASK, &amp;amp;set, NULL) - replace the thread's mask with given signal set
+pthread_sigmask(SIG_BLOCK, &amp;amp;set, NULL) - add the signal set to the thread's mask
+pthread_sigmask(SIG_UNBLOCK, &amp;amp;set, NULL) - remove the signal set from the thread's mask</code></pre>
 
 
 <h2>How are pending signals delivered in a multi-threaded program?</h2>

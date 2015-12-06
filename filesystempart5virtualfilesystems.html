@@ -93,7 +93,7 @@ engr-ews-homes.engr.illinois.edu:/fs1-homes/angrave/linux on /home/angrave type 
 
 <p>Notice that each line includes the filesystem type source of the filesystem and mount point.<br />
 To reduce this output we can pipe it into <code>grep</code> and only see lines that match a regular expression. </p>
-<pre class="highlight"><code>&gt;mount | grep proc  # only see lines that contain 'proc'
+<pre class="highlight"><code>&amp;gt;mount | grep proc  # only see lines that contain 'proc'
 proc on /proc type proc (rw)
 none on /proc/sys/fs/binfmt_misc type binfmt_misc (rw)</code></pre>
 

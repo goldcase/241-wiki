@@ -74,14 +74,14 @@
 <p>This page introduces unnamed semaphores. Unfortunately Mac OS X does not support these yet.</p>
 <p>First decide if the initial value should be zero or some other value (e.g. the number of remaining spaces in an array).<br />
 Unlike pthread mutex there are not shortcuts to creating a semaphore - use <code>sem_init</code></p>
-<pre class="highlight"><code class="language-C">#include &lt;semaphore.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;semaphore.h&amp;gt;
 
 sem_t s;
 int main() {
-  sem_init(&amp;s, 0, 10); // returns -1 (=FAILED) on OS X
-  sem_wait(&amp;s); // Could do this 10 times without blocking
-  sem_post(&amp;s); // Announce that we've finished (and one more resource item is available; increment count)
-  sem_destroy(&amp;s); // release resources of the semaphore
+  sem_init(&amp;amp;s, 0, 10); // returns -1 (=FAILED) on OS X
+  sem_wait(&amp;amp;s); // Could do this 10 times without blocking
+  sem_post(&amp;amp;s); // Announce that we've finished (and one more resource item is available; increment count)
+  sem_destroy(&amp;amp;s); // release resources of the semaphore
 }</code></pre>
 
 
@@ -96,28 +96,28 @@ int main() {
 <p>Yes! <code>sem_post</code> is one of a handful of functions that can be correctly used inside a signal handler.<br />
 This means we can release a waiting thread which can now make all of the calls that we were not<br />
 allowed to call inside the signal handler itself (e.g. <code>printf</code>).</p>
-<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
-#include &lt;pthread.h&gt;
-#include &lt;signal.h&gt;
-#include &lt;semaphore.h&gt;
-#include &lt;unistd.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;pthread.h&amp;gt;
+#include &amp;lt;signal.h&amp;gt;
+#include &amp;lt;semaphore.h&amp;gt;
+#include &amp;lt;unistd.h&amp;gt;
 
 sem_t s;
 
 void handler(int signal)
 {
-    sem_post(&amp;s); /* Release the Kraken! */
+    sem_post(&amp;amp;s); /* Release the Kraken! */
 }
 
 void *singsong(void *param)
 {
-    sem_wait(&amp;s);
+    sem_wait(&amp;amp;s);
     printf(&quot;I had to wait until your signal released me!\n&quot;);
 }
 
 int main()
 {
-    int ok = sem_init(&amp;s, 0, 0 /* Initial value of zero*/); 
+    int ok = sem_init(&amp;amp;s, 0, 0 /* Initial value of zero*/); 
     if (ok == -1) {
        perror(&quot;Could not create unnamed semaphore&quot;);
        return 1;
@@ -125,7 +125,7 @@ int main()
     signal(SIGINT, handler); // Too simple! See note below
 
     pthread_t tid;
-    pthread_create(&amp;tid, NULL, singsong, NULL);
+    pthread_create(&amp;amp;tid, NULL, singsong, NULL);
     pthread_exit(NULL); /* Process will exit when there are no more threads */
 }</code></pre>
 

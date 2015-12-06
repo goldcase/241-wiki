@@ -96,8 +96,8 @@ Since a (void*) type can hold small integers, we will pass the value of <code>i<
 double data[256][8192] ;
 int main() {
     pthread_t ids[N];
-    for(int i = 0; i &lt; N; i++)  
-        pthread_create(&amp;ids[i], NULL, calc, (void *) i);</code></pre>
+    for(int i = 0; i &amp;lt; N; i++)  
+        pthread_create(&amp;amp;ids[i], NULL, calc, (void *) i);</code></pre>
 
 
 <p>Note, we will never dereference this pointer value as an actual memory location - we will just cast it straight back to an integer:</p>
@@ -105,7 +105,7 @@ int main() {
 // Thread 0 will work on rows 0..15, thread 1 on rows 16..31
   int x, y, start = N * (int) ptr;
   int end = start + N; 
-  for(x = start; x &lt; end; x++) for (y = 0; y &lt; 8192; y++) { /* do calc #1 */ }</code></pre>
+  for(x = start; x &amp;lt; end; x++) for (y = 0; y &amp;lt; 8192; y++) { /* do calc #1 */ }</code></pre>
 
 
 <p>After calculation 1 completes we need to wait for the slower threads (unless we are the last thread!).<br />
@@ -130,19 +130,19 @@ pthread_mutex_t m;
 pthread_cond_t cv;
 
 main() {
-  pthread_mutex_init(&amp;m, NULL);
-  pthread_cond_init(&amp;cv, NULL);</code></pre>
+  pthread_mutex_init(&amp;amp;m, NULL);
+  pthread_cond_init(&amp;amp;cv, NULL);</code></pre>
 
 
 <p>We will use the mutex to ensure that only one thread modifies <code>remain</code> at a time.<br />
-The last arriving thread needs to wake up <em>all</em> sleeping threads - so we will use <code>pthread_cond_broadcast(&amp;cv)</code> not <code>pthread_cond_signal</code></p>
-<pre class="highlight"><code class="language-C">pthread_mutex_lock(&amp;m);
+The last arriving thread needs to wake up <em>all</em> sleeping threads - so we will use <code>pthread_cond_broadcast(&amp;amp;cv)</code> not <code>pthread_cond_signal</code></p>
+<pre class="highlight"><code class="language-C">pthread_mutex_lock(&amp;amp;m);
 remain--; 
-if (remain ==0) { pthread_cond_broadcast(&amp;cv); }
+if (remain ==0) { pthread_cond_broadcast(&amp;amp;cv); }
 else {
-  while(remain != 0) { pthread_cond_wait(&amp;cv, &amp;m) }
+  while(remain != 0) { pthread_cond_wait(&amp;amp;cv, &amp;amp;m) }
 }
-pthread_mutex_unlock(&amp;m);</code></pre>
+pthread_mutex_unlock(&amp;amp;m);</code></pre>
 
 
 <p>When a thread enters <code>pthread_cond_wait</code> it releases the mutex and sleeps. At some point in the future it will be awoken. Once we bring a thread back from its sleep, before returning it must wait until it can lock the mutex. Notice that even if a sleeping thread wakes up early, it will check the while loop condition and re-enter wait if necessary.</p>          </div>

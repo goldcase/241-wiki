@@ -102,7 +102,7 @@ int kill(pid_t pid, int sig); // Send a signal to another process</code></pre>
 
 
 <p>In the example below, the newly created thread executing <code>func</code> will be interrupted by <code>SIGINT</code></p>
-<pre class="highlight"><code class="language-C">pthread_create(&amp;tid, NULL, func, args);
+<pre class="highlight"><code class="language-C">pthread_create(&amp;amp;tid, NULL, func, args);
 pthread_kill(tid, SIGINT);
 pthread_kill(pthread_self(), SIGKILL); // send SIGKILL to myself</code></pre>
 

@@ -89,7 +89,7 @@ The NDEBUG macro will disable all assertions, so don't forget to set that once y
 }</code></pre>
 
 
-<pre class="highlight"><code class="language-sh">$ gcc main.c -g -o main &amp;&amp; ./main
+<pre class="highlight"><code class="language-sh">$ gcc main.c -g -o main &amp;amp;&amp;amp; ./main
 (gdb) r
 [...]
 Program received signal SIGTRAP, Trace/breakpoint trap.
@@ -108,12 +108,12 @@ $1 = 42</code></pre>
 }</code></pre>
 
 
-<pre class="highlight"><code class="language-sh">$ gcc main.c -g -o main &amp;&amp; ./main
+<pre class="highlight"><code class="language-sh">$ gcc main.c -g -o main &amp;amp;&amp;amp; ./main
 $ Cat ZVQ� $</code></pre>
 
 
 <pre class="highlight"><code class="language-sh">(gdb) l
-1   #include &lt;stdio.h&gt;
+1   #include &amp;lt;stdio.h&amp;gt;
 2   int main() {
 3       char bad_string[3] = {'C', 'a', 't'};
 4       printf(&quot;%s&quot;, bad_string);

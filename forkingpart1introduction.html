@@ -84,10 +84,10 @@ printf(&quot;You see this line twice!\n&quot;);</code></pre>
 
 <h2>Why does this example print 42 twice?</h2>
 <p>The following program prints out 42 twice - but the <code>fork()</code> is after the <code>printf</code>!? Why?</p>
-<pre class="highlight"><code class="language-C">#include &lt;unistd.h&gt; /*fork declared here*/
-#include &lt;stdio.h&gt; /* printf declared here*/
+<pre class="highlight"><code class="language-C">#include &amp;lt;unistd.h&amp;gt; /*fork declared here*/
+#include &amp;lt;stdio.h&amp;gt; /* printf declared here*/
 int main() {
-   int answer = 84 &gt;&gt; 1;
+   int answer = 84 &amp;gt;&amp;gt; 1;
    printf(&quot;Answer: %d&quot;, answer);
    fork();
    return 0;
@@ -102,7 +102,7 @@ When <code>fork()</code> is executed the entire process memory is duplicated inc
 <p>The child process can find its parent - the original process that was duplicated -  by calling getppid() - so does not need any additional return information from <code>fork()</code>. The parent process however can only find out the id of the new child process from the return value of <code>fork</code>:</p>
 <pre class="highlight"><code class="language-C">pid_t id = fork();
 if (id == -1) exit(1); // fork failed 
-if (id &gt; 0)
+if (id &amp;gt; 0)
 { 
 // I'm the original parent and 
 // I just created a child process with id 'id'
@@ -124,10 +124,10 @@ if (id &gt; 0)
 <p>Use <code>waitpid</code> (or <code>wait</code>).</p>
 <pre class="highlight"><code class="language-C">pid_t child_id = fork();
 if (child_id == -1) { perror(&quot;fork&quot;); exit(EXIT_FAILURE);}
-if (child_id &gt; 0) { 
+if (child_id &amp;gt; 0) { 
   // We have a child! Get their exit code
   int status; 
-  waitpid( child_id, &amp;status, 0 );
+  waitpid( child_id, &amp;amp;status, 0 );
   // code not shown to get exit status from child
 } else { // In child ...
   // start calculation
@@ -137,18 +137,18 @@ if (child_id &gt; 0) {
 
 <h2>Can I make the child process execute another program?</h2>
 <p>Yes. Use one of the <a href="http://man7.org/linux/man-pages/man3/exec.3.html"><code>exec</code></a> functions after forking. The <code>exec</code> set of functions replaces the process image with the the process image of what is being called. This means that any lines of code after the <code>exec</code> call are replaced. Any other work you want the child process to do should be done before the <code>exec</code> call.  </p>
-<pre class="highlight"><code class="language-C">#include &lt;unistd.h&gt;
-#include &lt;sys/types.h&gt; 
-#include &lt;sys/wait.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;unistd.h&amp;gt;
+#include &amp;lt;sys/types.h&amp;gt; 
+#include &amp;lt;sys/wait.h&amp;gt;
+#include &amp;lt;stdlib.h&amp;gt;
+#include &amp;lt;stdio.h&amp;gt;
 
 int main(int argc, char**argv) {
   pid_t child = fork();
   if (child == -1) return EXIT_FAILURE;
   if (child) { /* I have a child! */
     int status;
-    waitpid(child , &amp;status ,0);
+    waitpid(child , &amp;amp;status ,0);
     return EXIT_SUCCESS;
 
   } else { /* I am the child */
@@ -166,8 +166,8 @@ int main(int argc, char**argv) {
 
 <h2>A simpler way to execute another program</h2>
 <p>Use <code>system</code>!!! Here is how to use it:</p>
-<pre class="highlight"><code class="language-C">#include &lt;unistd.h&gt;
-#include &lt;stdlib.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;unistd.h&amp;gt;
+#include &amp;lt;stdlib.h&amp;gt;
 
 int main(int argc, char**argv) {
   system(&quot;/bin/ls&quot;);
@@ -178,13 +178,13 @@ int main(int argc, char**argv) {
 <p>The <code>system</code> call would fork, exec the command passed by parameter and the parent process would wait for this to finish. This also means that <code>system</code> is a blocking call - The parent process can't continue until the process started by <code>system</code> exits. This may be useful or it may not be, use with caution.</p>
 <h2>What is the silliest fork example?</h2>
 <p>A slightly silly example is shown below. What will it print? Try it with multiple arguments to your program.</p>
-<pre class="highlight"><code class="language-C">#include &lt;unistd.h&gt;
-#include &lt;stdio.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;unistd.h&amp;gt;
+#include &amp;lt;stdio.h&amp;gt;
 int main(int argc, char **argv) {
   pid_t id;
   int status; 
-  while (--argc &amp;&amp; (id=fork())) {
-    waitpid(id,&amp;status,0); /* Wait for child*/
+  while (--argc &amp;amp;&amp;amp; (id=fork())) {
+    waitpid(id,&amp;amp;status,0); /* Wait for child*/
   }
   printf(&quot;%d:%s\n&quot;, argc, argv[argc]);
   return 0;
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
 <p>The amazing parallel apparent-O(N) <em>sleepsort</em> is today's silly winner. First published on <a href="https://dis.4chan.org/read/prog/1295544154">4chan in 2011 </a>. A version of this awful but amusing sorting algorithm is shown below.</p>
 <pre class="highlight"><code class="language-C">int main(int c, char **v)
 {
-        while (--c &gt; 1 &amp;&amp; !fork());
+        while (--c &amp;gt; 1 &amp;amp;&amp;amp; !fork());
         int val  = atoi(v[c]);
         sleep(val);
         printf(&quot;%d\n&quot;, val);

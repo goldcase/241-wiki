@@ -88,7 +88,7 @@ int bytesread = read(filedes[0], buffer, sizeof(buffer));</code></pre>
 <pre class="highlight"><code class="language-C">int filedes[2];
 pipe (filedes);
 pid_t child = fork();
-if (child &gt; 0) { /* I must be the parent */
+if (child &amp;gt; 0) { /* I must be the parent */
     char buffer[80];
     int bytesread = read(filedes[0], buffer, sizeof(buffer));
     // do something with the bytes read    
@@ -104,9 +104,9 @@ if (child &gt; 0) { /* I must be the parent */
 <h2>Can I use pipes inside a single process?</h2>
 <p>Short answer: Yes, but I'm not sure why you would want to LOL!</p>
 <p>Here's an example program that sends a message to itself:</p>
-<pre class="highlight"><code class="language-C">#include &lt;unistd.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;unistd.h&amp;gt;
+#include &amp;lt;stdlib.h&amp;gt;
+#include &amp;lt;stdio.h&amp;gt;
 
 int main() {
     int fh[2];

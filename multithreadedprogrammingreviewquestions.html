@@ -66,18 +66,16 @@
             </div>
             <h3>Multi threaded Programming: Review Questions</h3>
 
-<blockquote>
-<p>Warning - question numbers subject to change</p>
-</blockquote>
+<p>&gt; Warning - question numbers subject to change</p>
 <h2>Q1</h2>
 <p>Is the following code thread-safe? Redesign the following code to be thread-safe. Hint: A mutex is unnecessary if the message memory is unique to each call.</p>
 <pre class="highlight"><code class="language-C">static char message[20];
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZAER;
 
 void format(int v) {
-  pthread_mutex_lock(&amp;mutex);
+  pthread_mutex_lock(&amp;amp;mutex);
   sprintf(message,&quot;:%d:&quot;,v);
-  pthread_mutex_unlock(&amp;mutex);
+  pthread_mutex_unlock(&amp;amp;mutex);
   return message;
 }</code></pre>
 
@@ -103,9 +101,9 @@ void* func(void* ptr) {
 
 int main(int argv, char**argc) {
   sem_init(s,0, a);
-  while(b--) pthread_create(&amp;tid,NULL,func,&quot;W&quot;); 
-  while(c--) pthread_create(&amp;tid,NULL,func,&quot;P&quot;); 
-  while(d--) pthread_create(&amp;tid,NULL,func,&quot;W&quot;); 
+  while(b--) pthread_create(&amp;amp;tid,NULL,func,&quot;W&quot;); 
+  while(c--) pthread_create(&amp;amp;tid,NULL,func,&quot;P&quot;); 
+  while(d--) pthread_create(&amp;amp;tid,NULL,func,&quot;W&quot;); 
   pthread_exit(NULL); 
   /*Process will finish when all threads have exited */
 }</code></pre>
@@ -134,7 +132,7 @@ void* func(void*mesg) {
 
 int main(int argc, char**argv){
   pthread_t tid1;
-  pthread_create(&amp;tid1,NULL, func, &quot;A&quot;);
+  pthread_create(&amp;amp;tid1,NULL, func, &quot;A&quot;);
   func(&quot;B&quot;); // no need to create another thread - just use the main thread
   return 0;
 }</code></pre>
@@ -144,11 +142,11 @@ int main(int argc, char**argv){
 <p>Identify the critical sections in the given code. Add mutex locking to make the code thread safe. Add condition variable calls so that <code>total</code> never becomes negative or above 1000. Instead the call should block until it is safe to proceed. Explain why <code>pthread_cond_broadcast</code> is necessary.</p>
 <pre class="highlight"><code class="language-C">int total;
 void add(int value) {
- if(value) &lt;1) return;
+ if(value) &amp;lt;1) return;
  total += value;
 }
 void sub(int value) {
- if(value) &lt;1) return;
+ if(value) &amp;lt;1) return;
  total -= value;
 }</code></pre>
 
@@ -179,15 +177,15 @@ void set_edge(graph_t* graph, int i, int j, double time); </code></pre>
 <p>For performance, multiple threads must be able to call <code>shortest</code> at the same time but the graph can only be modified by one thread when no threads other are executing inside <code>shortest</code> or <code>set_edge</code>.</p>
 <p>Use mutex lock and condition variables to implement a reader-writer solution. An incomplete attempt is shown below. Though this attempt is threadsafe (thus sufficient for demo day!), it does not allow multiple threads to calculate <code>shortest</code> path at the same time and will not have sufficient throughput.</p>
 <pre class="highlight"><code class="language-C">path_t* shortest_safe(graph_t* graph, int i, int j) {
-  pthread_mutex_lock(&amp;m);
+  pthread_mutex_lock(&amp;amp;m);
   path_t* path = shortest(graph, i, j);
-  pthread_mutex_unlock(&amp;m);
+  pthread_mutex_unlock(&amp;amp;m);
   return path;
 }
 void set_edge_safe(graph_t* graph, int i, int j, double dist) {
-  pthread_mutex_lock(&amp;m);
+  pthread_mutex_lock(&amp;amp;m);
   set_edge(graph, i, j, dist);
-  pthread_mutex_unlock(&amp;m);
+  pthread_mutex_unlock(&amp;amp;m);
 }</code></pre>          </div>
         </div>
       </main>

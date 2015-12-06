@@ -83,8 +83,8 @@ In the implementation, remember that pointer arithmetic depends on type. For exa
 <p>There are two simple ways to note if a block is in use or available. The first is to store it as a byte in the header information along with the size and the second to encode it as the lowest bit in the size!<br />
 Thus block size information would be limited to only even values:</p>
 <pre class="highlight"><code>// Assumes p is a reasonable pointer type, e.g. 'size_t *'.
-isallocated = (*p) &amp; 1;
-realsize = (*p) &amp; ~1;  // mask out the lowest bit</code></pre>
+isallocated = (*p) &amp;amp; 1;
+realsize = (*p) &amp;amp; ~1;  // mask out the lowest bit</code></pre>
 
 
 <h2>Alignment and rounding up considerations</h2>
@@ -100,7 +100,7 @@ realsize = (*p) &amp; ~1;  // mask out the lowest bit</code></pre>
 <h2>Implementing free</h2>
 <p>When <code>free</code> is called we need to re-apply the offset to get back to the 'real' start of the block (remember we didn't give the user a pointer to the actual start of the block?), i.e. to where we stored the size information.</p>
 <p>A naive implementation would simply mark the block as unused. If we are storing the block allocation status in the lowest size bit, then we just need to clear the bit:</p>
-<pre class="highlight"><code class="language-C">*p = (*p) &amp; ~1; // Clear lowest bit </code></pre>
+<pre class="highlight"><code class="language-C">*p = (*p) &amp;amp; ~1; // Clear lowest bit </code></pre>
 
 
 <p>However, we have a bit more work to do: If the current block and the next block (if it exists) are both free we need to coalesce these blocks into a single block.<br />
@@ -130,7 +130,7 @@ Allocating memory is a worst-case linear time operation (search linked lists for
 <p>The main disadvantage of the Buddy allocator is that they suffer from internal fragmentation, because allocations are rounded up to the nearest block size. For example, a 68-byte allocation will require a 128-byte block.</p>
 <h3>Further Reading and References</h3>
 <ul>
-<li>See <a href="http://books.google.com/books?id=0uHME7EfjQEC&amp;lpg=PP1&amp;pg=PA85#v=onepage&amp;q&amp;f=false">Foundations of Software Technology and Theoretical Computer Science 1999 proceedings</a> (Google books,page 85)</li>
+<li>See <a href="http://books.google.com/books?id=0uHME7EfjQEC&amp;amp;lpg=PP1&amp;amp;pg=PA85#v=onepage&amp;amp;q&amp;amp;f=false">Foundations of Software Technology and Theoretical Computer Science 1999 proceedings</a> (Google books,page 85)</li>
 <li>ThanksForTheMemory UIUC lecture Slides (<a href="https://subversion.ews.illinois.edu/svn/fa14-cs241/_shared/lectures/CS241-05-ThanksForTheMemorySlides.pptx">pptx</a>) (<a href="https://subversion.ews.illinois.edu/svn/fa14-cs241/_shared/lectures/CS241-05-ThanksForTheMemorySlides.pptx.pdf">pdf</a>)<br />
 and </li>
 <li><a href="http://en.wikipedia.org/wiki/Buddy_memory_allocation">Wikipedia's buddy memory allocation page</a></li>

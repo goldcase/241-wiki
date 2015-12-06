@@ -78,7 +78,7 @@
 int getHiscore(char* game) {
   // Marshall the request into a sequence of bytes:
   char* buffer;
-  asprintf(&amp;buffer,&quot;getHiscore(%s)!&quot;, name);
+  asprintf(&amp;amp;buffer,&quot;getHiscore(%s)!&quot;, name);
 
   // Send down the wire (we do not send the zero byte; the '!' signifies the end of the message)
   write(fd, buffer, strlen(buffer) );
@@ -115,7 +115,7 @@ int getHiscore(char* game) {
 <p>A secure RPC will need to implement additional security checks (including authentication and authorization), validate data and encrypt communication between the client and host.</p>
 <h2>Transferring large amounts of structured data</h2>
 <p>Let's examine three methods of transferring data using 3 different formats - JSON, XML and Google Protocol Buffers. JSON and XML are text-based protocols. Examples of JSON and XML messages are below.</p>
-<pre class="highlight"><code class="language-xml">&lt;ticket&gt;&lt;price currency='dollar'&gt;10&lt;/price&gt;&lt;vendor&gt;travelocity&lt;/vendor&gt;&lt;/ticket&gt;</code></pre>
+<pre class="highlight"><code class="language-xml">&amp;lt;ticket&amp;gt;&amp;lt;price currency='dollar'&amp;gt;10&amp;lt;/price&amp;gt;&amp;lt;vendor&amp;gt;travelocity&amp;lt;/vendor&amp;gt;&amp;lt;/ticket&amp;gt;</code></pre>
 
 
 <pre class="highlight"><code class="language-javascript">{ 'currency':'dollar' , 'vendor':'travelocity', 'price':'10' }</code></pre>

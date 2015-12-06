@@ -70,15 +70,15 @@
 <p>A critical section is a section of code that can only be executed by one thread at a time, if the program is to function correctly. If two threads (or processes) were to execute code inside the critical section at the same time then it is possible that program may no longer have correct behavior.</p>
 <h2>Is just incrementing a variable a critical section?</h2>
 <p>Possibly. Incrementing a variable (<code>i++</code>) is performed in three individual steps: Copy the memory contents to the CPU register. Increment the value in the CPU. Store the new value in memory. If the memory location is only accessible by one thread (e.g. automatic variable <code>i</code> below) then there is no possibility of a race condition and no Critical Section associated with <code>i</code>. However the <code>sum</code> variable is a global variable and accessed by two threads. It is possible that two threads may attempt to increment the variable at the same time.</p>
-<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
-#include &lt;pthread.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;pthread.h&amp;gt;
 // Compile with -pthread
 
 int sum = 0; //shared
 
 void *countgold(void *param) {
     int i; //local to each thread
-    for (i = 0; i &lt; 10000000; i++) {
+    for (i = 0; i &amp;lt; 10000000; i++) {
         sum += 1;
     }
     return NULL;
@@ -86,8 +86,8 @@ void *countgold(void *param) {
 
 int main() {
     pthread_t tid1, tid2;
-    pthread_create(&amp;tid1, NULL, countgold, NULL);
-    pthread_create(&amp;tid2, NULL, countgold, NULL);
+    pthread_create(&amp;amp;tid1, NULL, countgold, NULL);
+    pthread_create(&amp;amp;tid2, NULL, countgold, NULL);
 
     //Wait for both threads to finish:
     pthread_join(tid1, NULL);
@@ -105,17 +105,17 @@ A different sum is printed each time the program is run because there is a race 
 If one thread is currently inside a critical section we would like another thread to wait until the first thread is complete. For this purpose we can use a mutex (short for Mutual Exclusion).</p>
 <p>For simple examples the smallest amount of code we need to add is just three lines:</p>
 <pre class="highlight"><code class="language-C">pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER; // global variable
-pthread_mutex_lock(&amp;m); // start of Critical Section
-pthread_mutex_unlock(&amp;m); //end of Critical Section</code></pre>
+pthread_mutex_lock(&amp;amp;m); // start of Critical Section
+pthread_mutex_unlock(&amp;amp;m); //end of Critical Section</code></pre>
 
 
-<p>Once we are finished with the mutex we should also call <code>pthread_mutex_destroy(&amp;m)</code> too. Note, you can only destroy an unlocked mutex. Calling destroy on a destroyed lock, initializing an initialized lock, locking an already locked lock, unlocking an unlocked lock etc are unsupported (at least for default mutexes) and usually result in undefined behavior.</p>
+<p>Once we are finished with the mutex we should also call <code>pthread_mutex_destroy(&amp;amp;m)</code> too. Note, you can only destroy an unlocked mutex. Calling destroy on a destroyed lock, initializing an initialized lock, locking an already locked lock, unlocking an unlocked lock etc are unsupported (at least for default mutexes) and usually result in undefined behavior.</p>
 <h2>If I lock a mutex, does it stop all other threads?</h2>
 <p>No, the other threads will continue. It's only when a thread attempts to lock a mutex that is already locked, will the thread have to wait. As soon as the original thread unlocks the mutex, the second (waiting) thread will acquire the lock and be able to continue.</p>
 <h2>Are there other ways to create a mutex?</h2>
 <p>Yes. You can use the macro PTHREAD_MUTEX_INITIALIZER only for global ('static') variables.<br />
 m = PTHREAD_MUTEX_INITIALIZER is equivalent to the more general purpose<br />
-<code>pthread_mutex_init(&amp;m,NULL)</code>. The init version includes options to trade performance for additional error-checking and advanced sharing options.</p>
+<code>pthread_mutex_init(&amp;amp;m,NULL)</code>. The init version includes options to trade performance for additional error-checking and advanced sharing options.</p>
 <pre class="highlight"><code class="language-C">pthread_mutex_t *lock = malloc(sizeof(pthread_mutex_t)); 
 pthread_mutex_init(lock, NULL);
 //later
@@ -138,8 +138,8 @@ free(lock);</code></pre>
 <p>There is a small amount of overhead of calling <code>pthread_mutex_lock</code> and <code>_unlock</code>; however this is the price you pay for correctly functioning programs!</p>
 <h2>Simplest complete example?</h2>
 <p>A complete example is shown below</p>
-<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
-#include &lt;pthread.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;pthread.h&amp;gt;
 
 // Compile with -pthread
 // Create a mutex this ready to be locked!
@@ -155,21 +155,21 @@ void *countgold(void *param) {
     //However locking and unlocking a million times
     //has significant overhead in this simple answer
 
-    pthread_mutex_lock(&amp;m);
+    pthread_mutex_lock(&amp;amp;m);
 
     // Other threads that call lock will have to wait until we call unlock
 
-    for (i = 0; i &lt; 10000000; i++) {
+    for (i = 0; i &amp;lt; 10000000; i++) {
     sum += 1;
     }
-    pthread_mutex_unlock(&amp;m);
+    pthread_mutex_unlock(&amp;amp;m);
     return NULL;
 }
 
 int main() {
     pthread_t tid1, tid2;
-    pthread_create(&amp;tid1, NULL, countgold, NULL);
-    pthread_create(&amp;tid2, NULL, countgold, NULL);
+    pthread_create(&amp;amp;tid1, NULL, countgold, NULL);
+    pthread_create(&amp;amp;tid2, NULL, countgold, NULL);
 
     //Wait for both threads to finish:
     pthread_join(tid1, NULL);
@@ -181,10 +181,10 @@ int main() {
 
 
 <p>In the code above, the thread gets the lock to the counting house before entering. The critical section is only the <code>sum+=1</code> so the following version is also correct but slower - </p>
-<pre class="highlight"><code class="language-C">    for (i = 0; i &lt; 10000000; i++) {
-        pthread_mutex_lock(&amp;m);
+<pre class="highlight"><code class="language-C">    for (i = 0; i &amp;lt; 10000000; i++) {
+        pthread_mutex_lock(&amp;amp;m);
         sum += 1;
-        pthread_mutex_unlock(&amp;m);
+        pthread_mutex_unlock(&amp;amp;m);
     }
     return NULL;
 }</code></pre>
@@ -192,13 +192,13 @@ int main() {
 
 <p>This process runs slower because we lock and unlock the mutex a million times, which is expensive - at least compared with incrementing a variable. (And in this simple example we didn't really need threads - we could have added up twice!)  A faster multi-thread example would be to add one million using an automatic(local) variable and only then adding it to a shared total after the calculation loop has finished:</p>
 <pre class="highlight"><code class="language-C">    int local = 0;
-    for (i = 0; i &lt; 10000000; i++) {
+    for (i = 0; i &amp;lt; 10000000; i++) {
        local += 1;
     }
 
-    pthread_mutex_lock(&amp;m);
+    pthread_mutex_lock(&amp;amp;m);
     sum += local;
-    pthread_mutex_unlock(&amp;m);
+    pthread_mutex_unlock(&amp;amp;m);
 
     return NULL;
 }</code></pre>

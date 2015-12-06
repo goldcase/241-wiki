@@ -76,60 +76,60 @@
 <p>Also remember that <code>pthread_cond_wait</code> performs <em>Three</em> actions. Firstly it atomically unlocks the mutex and then sleeps (until it is woken by <code>pthread_cond_signal</code> or <code>pthread_cond_broadcast</code>). Thirdly the awoken thread must re-acquire the mutex lock before returning. Thus only one thread can actually be running inside the critical section defined by the lock and unlock() methods.</p>
 <p>Implementation #3 below ensures that a reader will enter the cond_wait if there are any writers writing.</p>
 <pre class="highlight"><code class="language-C">read() {
-    lock(&amp;m)
+    lock(&amp;amp;m)
     while (writing)
-        cond_wait(&amp;cv, &amp;m)
+        cond_wait(&amp;amp;cv, &amp;amp;m)
     reading++;
 
 /* Read here! */
 
     reading--
-    cond_signal(&amp;cv)
-    unlock(&amp;m)
+    cond_signal(&amp;amp;cv)
+    unlock(&amp;amp;m)
 }</code></pre>
 
 
 <p>However only one reader a time can read because candidate #3 did not unlock the mutex. A better version unlocks before reading :</p>
 <pre class="highlight"><code class="language-C">read() {
-    lock(&amp;m);
+    lock(&amp;amp;m);
     while (writing)
-        cond_wait(&amp;cv, &amp;m)
+        cond_wait(&amp;amp;cv, &amp;amp;m)
     reading++;
-    unlock(&amp;m)
+    unlock(&amp;amp;m)
 /* Read here! */
-    lock(&amp;m)
+    lock(&amp;amp;m)
     reading--
-    cond_signal(&amp;cv)
-    unlock(&amp;m)
+    cond_signal(&amp;amp;cv)
+    unlock(&amp;amp;m)
 }</code></pre>
 
 
 <p>Does this mean that a writer and read could read and write at the same time? No! First of all, remember cond_wait requires the thread re-acquire the  mutex lock before returning. Thus only one thread can be executing code inside the critical section (marked with **) at a time!</p>
 <pre class="highlight"><code class="language-C">read() {
-    lock(&amp;m);
+    lock(&amp;amp;m);
 **  while (writing)
-**      cond_wait(&amp;cv, &amp;m)
+**      cond_wait(&amp;amp;cv, &amp;amp;m)
 **  reading++;
-    unlock(&amp;m)
+    unlock(&amp;amp;m)
 /* Read here! */
-    lock(&amp;m)
+    lock(&amp;amp;m)
 **  reading--
-**  cond_signal(&amp;cv)
-    unlock(&amp;m)
+**  cond_signal(&amp;amp;cv)
+    unlock(&amp;amp;m)
 }</code></pre>
 
 
 <p>Writers must wait for everyone. Mutual exclusion is assured by the lock. </p>
 <pre class="highlight"><code class="language-C">write() {
-    lock(&amp;m);
+    lock(&amp;amp;m);
 **  while (reading || writing)
-**      cond_wait(&amp;cv, &amp;m);
+**      cond_wait(&amp;amp;cv, &amp;amp;m);
 **  writing++;
 **
 ** /* Write here! */
 **  writing--;
-**  cond_signal(&amp;cv);
-    unlock(&amp;m);
+**  cond_signal(&amp;amp;cv);
+    unlock(&amp;amp;m);
 }</code></pre>
 
 
@@ -153,12 +153,12 @@
     lock()
     // readers that arrive *after* the writer arrived will have to wait here!
     while(writer)
-    cond_wait(&amp;cv,&amp;m)
+    cond_wait(&amp;amp;cv,&amp;amp;m)
 
     // readers that arrive while there is an active writer
     // will also wait.
     while (writing) 
-        cond_wait(&amp;cv,&amp;m)
+        cond_wait(&amp;amp;cv,&amp;amp;m)
     reading++
     unlock
   ...
@@ -175,35 +175,35 @@ int reading; // Number of threads that are actually reading inside the C.S.
 // if writing !=0 then reading must be zero (and vice versa)
 
 reader() {
-    lock(&amp;m)
+    lock(&amp;amp;m)
     while (writers)
-        cond_wait(&amp;turn, &amp;m)
+        cond_wait(&amp;amp;turn, &amp;amp;m)
     // No need to wait while(writing here) because we can only exit the above loop
     // when writing is zero
     reading++
-    unlock(&amp;m)
+    unlock(&amp;amp;m)
 
   // perform reading here
 
-    lock(&amp;m)
+    lock(&amp;amp;m)
     reading--
-    cond_broadcast(&amp;turn)
-    unlock(&amp;m)
+    cond_broadcast(&amp;amp;turn)
+    unlock(&amp;amp;m)
 }
 
 writer() {
-    lock(&amp;m)  
+    lock(&amp;amp;m)  
     writers++  
     while (reading || writing)   
-        cond_wait(&amp;turn, &amp;m)  
+        cond_wait(&amp;amp;turn, &amp;amp;m)  
     writing++  
-    unlock(&amp;m)  
+    unlock(&amp;amp;m)  
     // perform writing here  
-    lock(&amp;m)  
+    lock(&amp;amp;m)  
     writing--  
     writers--  
-    cond_broadcast(&amp;turn)  
-    unlock(&amp;m)  
+    cond_broadcast(&amp;amp;turn)  
+    unlock(&amp;amp;m)  
 }</code></pre>          </div>
         </div>
       </main>

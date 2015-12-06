@@ -70,7 +70,7 @@
 <p>By default, after a socket is closed the port enters a time-out state during which time it cannot be re-used ('bound to a new socket').</p>
 <p>This behavior can be disabled by setting the socket option REUSEPORT before bind-ing to a port:</p>
 <pre class="highlight"><code class="language-C">    int optval = 1;
-    setsockopt(sock_fd, SOL_SOCKET, SO_REUSEPORT, &amp;optval, sizeof(optval));
+    setsockopt(sock_fd, SOL_SOCKET, SO_REUSEPORT, &amp;amp;optval, sizeof(optval));
 
     bind(sock_fd, ...);</code></pre>
 
@@ -83,15 +83,15 @@
 <pre class="highlight"><code class="language-C">    struct sockaddr_storage clientaddr;
     socklen_t clientaddrsize = sizeof(clientaddr);
     int client_id = accept(passive_socket,
-            (struct sockaddr *) &amp;clientaddr,
-             &amp;clientaddrsize);</code></pre>
+            (struct sockaddr *) &amp;amp;clientaddr,
+             &amp;amp;clientaddrsize);</code></pre>
 
 
 <p>We've already seen <code>getaddrinfo</code> that can build a linked list of addrinfo entries (and each one of these can include socket configuration data). What if we wanted to turn socket data into IP and port addresses? Enter <code>getnameinfo</code> that can be used to convert a local or remote socket information into a domain name or numeric IP. Similarly the port number can be represented as a service name (e.g. "http" for port 80). In the example below we request numeric versions for the client IP address and client port number.</p>
 <pre class="highlight"><code class="language-C">    socklen_t clientaddrsize = sizeof(clientaddr);
-    int client_id = accept(sock_id, (struct sockaddr *) &amp;clientaddr, &amp;clientaddrsize);
+    int client_id = accept(sock_id, (struct sockaddr *) &amp;amp;clientaddr, &amp;amp;clientaddrsize);
     char host[256], port[256];
-    getnameinfo((struct sockaddr *) &amp;clientaddr,
+    getnameinfo((struct sockaddr *) &amp;amp;clientaddr,
           clientaddrsize, host, sizeof(host), port, sizeof(port),
           NI_NUMERICHOST | NI_NUMERICSERV);</code></pre>
 
@@ -106,12 +106,12 @@ The  ifaddrs struct includes the family but does not include the sizeof the stru
 <p>The complete code is shown below.</p>
 <pre class="highlight"><code class="language-C">    int required_family = AF_INET; // Change to AF_INET6 for IPv6
     struct ifaddrs *myaddrs, *ifa;
-    getifaddrs(&amp;myaddrs);
+    getifaddrs(&amp;amp;myaddrs);
     char host[256], port[256];
-    for (ifa = myaddrs; ifa != NULL; ifa = ifa-&gt;ifa_next) {
-        int family = ifa-&gt;ifa_addr-&gt;sa_family;
-        if (family == required_family &amp;&amp; ifa-&gt;ifa_addr) {
-            if (0 == getnameinfo(ifa-&gt;ifa_addr,
+    for (ifa = myaddrs; ifa != NULL; ifa = ifa-&amp;gt;ifa_next) {
+        int family = ifa-&amp;gt;ifa_addr-&amp;gt;sa_family;
+        if (family == required_family &amp;amp;&amp;amp; ifa-&amp;gt;ifa_addr) {
+            if (0 == getnameinfo(ifa-&amp;gt;ifa_addr,
                                 (family == AF_INET) ? sizeof(struct sockaddr_in) :
                                 sizeof(struct sockaddr_in6),
                                 host, sizeof(host), port, sizeof(port)

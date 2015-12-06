@@ -71,9 +71,9 @@
 <p>A simple example is shown below:</p>
 <pre class="highlight"><code class="language-C">char *name = ... ; int score = ...;
 printf(&quot;Hello %s, your result is %d\n&quot;, name, score);
-printf(&quot;Debug: The string and int are stored at: %p and %p\n&quot;, name, &amp;score );
+printf(&quot;Debug: The string and int are stored at: %p and %p\n&quot;, name, &amp;amp;score );
 // name already is a char pointer and points to the start of the array. 
-// We need &quot;&amp;&quot; to get the address of the int variable</code></pre>
+// We need &quot;&amp;amp;&quot; to get the address of the int variable</code></pre>
 
 
 <p>By default, for performance, <code>printf</code> does not actually write anything out (by calling write) until its buffer is full or a newline is printed. </p>
@@ -97,7 +97,7 @@ It's a good idea to check the return value to see how many items were parsed.<br
 char *line = &quot;v 10&quot;;
 char type;
 // Good practice: Check scanf parsed the line and read two values:
-int ok = 2 == sscanf(line, &quot;%c %d&quot;, &amp;type, &amp;data); // pointer error</code></pre>
+int ok = 2 == sscanf(line, &quot;%c %d&quot;, &amp;amp;type, &amp;amp;data); // pointer error</code></pre>
 
 
 <p>We wanted to write the character value into c and the integer value into the malloc'd memory.<br />
@@ -147,15 +147,15 @@ if (buffer[i] == '\n') buffer[i] = '\0'</code></pre>
 char *buffer = NULL;
 size_t size = 0;
 
-ssize_t chars = getline(&amp;buffer, &amp;size, stdin);
+ssize_t chars = getline(&amp;amp;buffer, &amp;amp;size, stdin);
 
 // Discard newline character if it is present,
-if (chars &gt; 0 &amp;&amp; buffer[chars -1] =='\n') buffer[chars-1] = '\0';
+if (chars &amp;gt; 0 &amp;amp;&amp;amp; buffer[chars -1] =='\n') buffer[chars-1] = '\0';
 
 // Read another line.
 // The existing buffer will be re-used, or, if necessary,
 // It will be `free`'d and a new larger buffer will `malloc`'d
-chars = getline(&amp;buffer, &amp;size, stdin);
+chars = getline(&amp;amp;buffer, &amp;amp;size, stdin);
 
 // Later... don't forget to free the buffer!
 free(buffer);</code></pre>          </div>

@@ -69,7 +69,7 @@
 <h2>How do I find out if file (an inode) is a regular file or directory?</h2>
 <p>Use the <code>S_ISDIR</code> macro to check the mode bits in the stat struct:</p>
 <pre class="highlight"><code class="language-C">struct stat s;
-stat(&quot;/tmp&quot;, &amp;s);
+stat(&quot;/tmp&quot;, &amp;amp;s);
 if (S_ISDIR(s.st_mode)) { ... </code></pre>
 
 
@@ -81,9 +81,9 @@ if (S_ISDIR(s.st_mode)) { ... </code></pre>
   struct dirent *dp;
   DIR *dirp = opendir(path);
   while ((dp = readdir(dirp)) != NULL) {
-     char newpath[strlen(path) + strlen(dp-&gt;d_name) + 1];
-     sprintf(newpath,&quot;%s/%s&quot;, newpath, dp-&gt;d_name);
-     printf(&quot;%s\n&quot;, dp-&gt;d_name);
+     char newpath[strlen(path) + strlen(dp-&amp;gt;d_name) + 1];
+     sprintf(newpath,&quot;%s/%s&quot;, newpath, dp-&amp;gt;d_name);
+     printf(&quot;%s\n&quot;, dp-&amp;gt;d_name);
      dirlist(newpath);
   }
 }
@@ -95,11 +95,11 @@ int main(int argc, char **argv) { dirlist(argv[1]); return 0; }</code></pre>
 <pre class="highlight"><code class="language-C">// Check opendir result (perhaps user gave us a path that can not be opened as a directory
 if (!dirp) { perror(&quot;Could not open directory&quot;); return; }
 // +2 as we need space for the / and the terminating 0
-char newpath[strlen(path) + strlen(dp-&gt;d_name) + 2]; 
+char newpath[strlen(path) + strlen(dp-&amp;gt;d_name) + 2]; 
 // Correct parameter
-sprintf(newpath,&quot;%s/%s&quot;, path, dp-&gt;d_name); 
+sprintf(newpath,&quot;%s/%s&quot;, path, dp-&amp;gt;d_name); 
 // Perform stat test (and verify) before recursing
-if (0 == stat(newpath,&amp;s) &amp;&amp; S_ISDIR(s.st_mode)) dirlist(newpath)
+if (0 == stat(newpath,&amp;amp;s) &amp;amp;&amp;amp; S_ISDIR(s.st_mode)) dirlist(newpath)
 // Resource leak: the directory file handle is not closed after the while loop
 closedir(dirp);</code></pre>
 
@@ -116,8 +116,8 @@ closedir(dirp);</code></pre>
 
 <p>To read the meta-(stat) information of a symbolic link use <code>lstat</code> not <code>stat</code></p>
 <pre class="highlight"><code class="language-C">struct stat s;
-stat(&quot;myfile.txt&quot;, &amp;s1); // stat info about  the notes.txt file
-lstat(&quot;myfile.txt&quot;, &amp;s2); // stat info about the symbolic link</code></pre>
+stat(&quot;myfile.txt&quot;, &amp;amp;s1); // stat info about  the notes.txt file
+lstat(&quot;myfile.txt&quot;, &amp;amp;s2); // stat info about the symbolic link</code></pre>
 
 
 <h2>Advantages of symbolic links</h2>
@@ -130,7 +130,7 @@ lstat(&quot;myfile.txt&quot;, &amp;s2); // stat info about the symbolic link</co
 <h2>What is <code>/dev/null</code> and when is it used?</h2>
 <p>The file <code>/dev/null</code> is a great place to store bits that you never need to read!<br />
 Bytes sent to <code>/dev/null/</code> are never stored - they are simply discarded. A common use of <code>/dev/null</code> is to discard standard output. For example,</p>
-<pre class="highlight"><code>$ ls . &gt;/dev/null</code></pre>
+<pre class="highlight"><code>$ ls . &amp;gt;/dev/null</code></pre>
 
 
 <h2>Why would I want to set a directory's sticky bit?</h2>
@@ -216,7 +216,7 @@ ie.</p>
 
 <p>Both the input and output files in the example above are virtual - they don't exist on a disk. This means the speed of the transfer is unaffected by hardware power. Instead they are part of the <code>dev</code> filesystem, which is virtual filesystem provided by the kernel.<br />
 The virtual file <code>/dev/urandom</code> provides an infinite stream of random bytes, while the virtal file <code>/dev/null</code> ignores all bytes written to it. A common use of <code>/dev/null</code> is to discard the output of a command,</p>
-<pre class="highlight"><code>$ myverboseexecutable &gt; /dev/null</code></pre>
+<pre class="highlight"><code>$ myverboseexecutable &amp;gt; /dev/null</code></pre>
 
 
 <p>Another commonly used /dev virtual file is <code>/dev/zero</code> which provides an infinite stream of zero bytes.<br />

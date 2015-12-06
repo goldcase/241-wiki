@@ -67,13 +67,13 @@
             <h3>Networking, Part 3: Building a simple TCP Client</h3>
 
 <h2>Complete Simple TCP Client Example</h2>
-<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;string.h&gt;
-#include &lt;sys/types.h&gt;
-#include &lt;sys/socket.h&gt;
-#include &lt;netdb.h&gt;
-#include &lt;unistd.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;stdlib.h&amp;gt;
+#include &amp;lt;string.h&amp;gt;
+#include &amp;lt;sys/types.h&amp;gt;
+#include &amp;lt;sys/socket.h&amp;gt;
+#include &amp;lt;netdb.h&amp;gt;
+#include &amp;lt;unistd.h&amp;gt;
 
 int main(int argc, char **argv)
 {
@@ -81,17 +81,17 @@ int main(int argc, char **argv)
     int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     struct addrinfo hints, *result;
-    memset(&amp;hints, 0, sizeof(struct addrinfo));
+    memset(&amp;amp;hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_INET; /* IPv4 only */
     hints.ai_socktype = SOCK_STREAM; /* TCP */
 
-    s = getaddrinfo(&quot;www.illinois.edu&quot;, &quot;80&quot;, &amp;hints, &amp;result);
+    s = getaddrinfo(&quot;www.illinois.edu&quot;, &quot;80&quot;, &amp;amp;hints, &amp;amp;result);
     if (s != 0) {
             fprintf(stderr, &quot;getaddrinfo: %s\n&quot;, gai_strerror(s));
             exit(1);
     }
 
-    connect(sock_fd, result-&gt;ai_addr, result-&gt;ai_addrlen);
+    connect(sock_fd, result-&amp;gt;ai_addr, result-&amp;gt;ai_addrlen);
 
     char *buffer = &quot;GET / HTTP/1.0\r\n\r\n&quot;;
     printf(&quot;SENDING: %s&quot;, buffer);

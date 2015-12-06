@@ -88,7 +88,7 @@
 <h1>Crash course intro to C</h1>
 <p><em>Warning new page</em> Please fix typos and formatting mistakes for me and add useful links too.*</p>
 <h2>How do you write a complete hello world program in C?</h2>
-<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;stdio.h&amp;gt;
 int main(void) { 
     printf(&quot;Hello World\n&quot;);
     return 0; 
@@ -149,7 +149,7 @@ printf(&quot;%d&quot;, num1); //prints num1</code></pre>
 <pre class="highlight"><code class="language-C">int *ptr = (int *) malloc(sizeof(int));
 *ptr = 10;
 printf(&quot;%p\n&quot;, ptr); //prints the address pointed to by the pointer
-printf(&quot;%p\n&quot;, &amp;ptr); /*prints the address of pointer -- extremely useful
+printf(&quot;%p\n&quot;, &amp;amp;ptr); /*prints the address of pointer -- extremely useful
 when dealing with double pointers*/
 printf(&quot;%d&quot;, *ptr); //prints the integer content of ptr
 return 0;</code></pre>
@@ -167,7 +167,7 @@ return 0;</code></pre>
 <h2>How would you make standard out be saved to a file?</h2>
 <p>Simplest way: run your program and use shell redirection<br />
 e.g.</p>
-<pre class="highlight"><code>./program &gt; output.txt
+<pre class="highlight"><code>./program &amp;gt; output.txt
 
 #To read the contents of the file,
 cat output.txt</code></pre>

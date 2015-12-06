@@ -73,9 +73,9 @@ The precise layout of the stack's contents and order of the automatic variables 
 <p>The example below demonstrates how the return address is stored on the stack. For a particular 32 bit architecture <a href="http://cs-education.github.io/sys/">Live Linux Machine</a>, we determine that the return address is stored at an address two pointers (8 bytes) above the address of the automatic variable. The code deliberately changes the stack value so that when the input function returns, rather than continuing on inside the main method, it jumps to the exploit function instead.</p>
 <pre class="highlight"><code class="language-C">// Overwrites the return address on the following machine:
 // http://cs-education.github.io/sys/
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;unistd.h&gt;
+#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;stdlib.h&amp;gt;
+#include &amp;lt;unistd.h&amp;gt;
 
 void breakout() {
     puts(&quot;Welcome. Have a shell...&quot;);
@@ -83,10 +83,10 @@ void breakout() {
 }
 void input() {
   void *p;
-  printf(&quot;Address of stack variable: %p\n&quot;, &amp;p);
-  printf(&quot;Something that looks like a return address on stack: %p\n&quot;, *((&amp;p)+2));
+  printf(&quot;Address of stack variable: %p\n&quot;, &amp;amp;p);
+  printf(&quot;Something that looks like a return address on stack: %p\n&quot;, *((&amp;amp;p)+2));
   // Let's change it to point to the start of our sneaky function.
-  *((&amp;p)+2) = breakout;
+  *((&amp;amp;p)+2) = breakout;
 }
 int main() {
     printf(&quot;main() code starts at %p\n&quot;,main);

@@ -89,13 +89,13 @@
 <p>The equivalent <code>sigaction</code> code is:</p>
 <pre class="highlight"><code class="language-C">struct sigaction sa; 
 sa.sa_handler = myhandler;
-sigemptyset(&amp;sa.sa_mask);
+sigemptyset(&amp;amp;sa.sa_mask);
 sa.sa_flags = 0; 
-sigaction(SIGINT, &amp;sa, NULL)</code></pre>
+sigaction(SIGINT, &amp;amp;sa, NULL)</code></pre>
 
 
 <p>However, we typically may also set the mask and the flags field. The mask is a temporary signal mask used during the signal handler execution. The SA_RESTART flag will automatically restart some (but not all) system calls that otherwise would have returned early (with EINTR error). The latter means we can simplify the rest of code somewhat because a restart loop may no longer be required.</p>
-<pre class="highlight"><code class="language-C">sigfillset(&amp;sa.sa_mask);
+<pre class="highlight"><code class="language-C">sigfillset(&amp;amp;sa.sa_mask);
 sa.sa_flags = SA_RESTART; /* Restart functions if  interrupted by handler */     </code></pre>
 
 
@@ -108,13 +108,13 @@ sa.sa_flags = SA_RESTART; /* Restart functions if  interrupted by handler */    
 int main (int argc, char *argv[])
 {
     pthread_t sig_thr_id;      /* signal handler thread ID */
-    sigemptyset (&amp;signal_mask);
-    sigaddset (&amp;signal_mask, SIGINT);
-    sigaddset (&amp;signal_mask, SIGTERM);
-    pthread_sigmask (SIG_BLOCK, &amp;signal_mask, NULL);
+    sigemptyset (&amp;amp;signal_mask);
+    sigaddset (&amp;amp;signal_mask, SIGINT);
+    sigaddset (&amp;amp;signal_mask, SIGTERM);
+    pthread_sigmask (SIG_BLOCK, &amp;amp;signal_mask, NULL);
 
     /* New threads will inherit this thread's mask */
-    pthread_create (&amp;sig_thr_id, NULL, signal_thread, NULL);
+    pthread_create (&amp;amp;sig_thr_id, NULL, signal_thread, NULL);
 
     /* APPLICATION CODE */
     ...
@@ -125,7 +125,7 @@ void *signal_thread (void *arg)
     int       sig_caught;    /* signal caught       */
 
     /* Use same mask as the set of signals that we'd like to know about! */
-    sigwait(&amp;signal_mask, &amp;sig_caught);
+    sigwait(&amp;amp;signal_mask, &amp;amp;sig_caught);
     switch (sig_caught)
     {
     case SIGINT:     /* process SIGINT  */

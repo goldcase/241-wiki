@@ -66,14 +66,12 @@
             </div>
             <h3>Pipe: Review Questions</h3>
 
-<blockquote>
-<p>Question numbers subject to change</p>
-</blockquote>
+<p>&gt; Question numbers subject to change</p>
 <h2>Q1</h2>
 <p>Fill in the blanks to make the following program print 123456789. If <code>cat</code> is given no arguments it simply prints its input until EOF. Bonus: Explain why the <code>close</code> call below is necessary.</p>
 <pre class="highlight"><code class="language-C">int main() {
   int i = 0;
-  while(++i &lt; 10) {
+  while(++i &amp;lt; 10) {
     pid_t pid = fork();
     if(pid == 0) { /* child */
       char buffer[16];

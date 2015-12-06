@@ -81,7 +81,7 @@ int lock = 0; // initialization
 // To enter the critical section you need to read a lock value of zero. 
 // 'xchg' function doesn't exist, but imagine this function is built on the atomic XCHG CPU function
 // i.e. it writes '1' into the lock variable and returns the previous contents of the memory
-while (xchg( 1, &amp;lock)) {/*spin spin spin*/}
+while (xchg( 1, &amp;amp;lock)) {/*spin spin spin*/}
 /* Do Critical Section stuff*/
 lock = 0;</code></pre>
 
@@ -117,7 +117,7 @@ lock = 0;</code></pre>
 </thead>
 <tbody>
 <tr>
-<td><code>while( answer &lt; 42) {</code></td>
+<td><code>while( answer &amp;lt; 42) {</code></td>
 <td></td>
 </tr>
 <tr>
@@ -147,33 +147,33 @@ pthread_mutex_t m;
 int count;
 
 // Initialize
-pthread_cond_init(&amp;cv, NULL);
-pthread_mutex_init(&amp;m, NULL);
+pthread_cond_init(&amp;amp;cv, NULL);
+pthread_mutex_init(&amp;amp;m, NULL);
 count = 0;
 
-pthread_mutex_lock(&amp;m);
-while (count &lt; 10) {
-   pthread_cond_wait(&amp;cv, &amp;m); 
+pthread_mutex_lock(&amp;amp;m);
+while (count &amp;lt; 10) {
+   pthread_cond_wait(&amp;amp;cv, &amp;amp;m); 
 /* Remember that cond_wait unlocks the mutex before blocking (waiting)! */
 /* After unlocking, other threads can claim the mutex. */
 /* When this thread is later woken it will */
 /* re-lock the mutex before returning */
 }
-pthread_mutex_unlock(&amp;m);
+pthread_mutex_unlock(&amp;amp;m);
 
-//later clean up with pthread_cond_destroy(&amp;cv); and mutex_destroy 
+//later clean up with pthread_cond_destroy(&amp;amp;cv); and mutex_destroy 
 
 
 // In another thread increment count:
 while (1) {
-  pthread_mutex_lock(&amp;m);
+  pthread_mutex_lock(&amp;amp;m);
   count++;
-  pthread_cond_signal(&amp;cv);
+  pthread_cond_signal(&amp;amp;cv);
   /* Even though the other thread is woken up it cannot not return */
   /* from pthread_cond_wait until we have unlocked the mutex. This is */
   /* a good thing! In fact, it is usually the best practice to call */
   /* cond_signal or cond_broadcast before unlocking the mutex */
-  pthread_mutex_unlock(&amp;m);
+  pthread_mutex_unlock(&amp;amp;m);
 }</code></pre>
 
 
@@ -193,9 +193,9 @@ while (1) {
 <pre class="highlight"><code class="language-C">int sem_init(sem_t *s, int pshared, int value) {
   if (pshared) { errno = ENOSYS /* 'Not implemented'*/; return -1;}
 
-  s-&gt;count = value;
-  pthread_mutex_init(&amp;s-&gt;m, NULL);
-  pthread_cond_init(&amp;s-&gt;cv, NULL);
+  s-&amp;gt;count = value;
+  pthread_mutex_init(&amp;amp;s-&amp;gt;m, NULL);
+  pthread_cond_init(&amp;amp;s-&amp;gt;cv, NULL);
   return 0;
 }</code></pre>
 
@@ -204,12 +204,12 @@ while (1) {
 We will also wake up any threads sleeping inside the condition variable.<br />
 Notice we lock and unlock the mutex so only one thread can be inside the critical section at a time.</p>
 <pre class="highlight"><code class="language-C">sem_post(sem_t *s) {
-  pthread_mutex_lock(&amp;s-&gt;m);
-  s-&gt;count++;
-  pthread_cond_signal(s-&gt;cv); /* See note */
+  pthread_mutex_lock(&amp;amp;s-&amp;gt;m);
+  s-&amp;gt;count++;
+  pthread_cond_signal(s-&amp;gt;cv); /* See note */
   /* A woken thread must acquire the lock, so it will also have to wait until we call unlock*/
 
-  pthread_mutex_unlock(&amp;s-&gt;m);
+  pthread_mutex_unlock(&amp;amp;s-&amp;gt;m);
 }</code></pre>
 
 
@@ -217,20 +217,20 @@ Notice we lock and unlock the mutex so only one thread can be inside the critica
 Just like <code>sem_post</code> we wrap the critical section using the lock (so only one thread can be executing our code at a time). Notice if the thread does need to wait then the mutex will be unlocked, allowing another thread to enter <code>sem_post</code> and waken us from our sleep!</p>
 <p>Notice that even if a thread is woken up, before it returns from  <code>pthread_cond_wait</code> it must re-acquire the lock, so it will have to wait a little bit more (e.g. until sem_post finishes). </p>
 <pre class="highlight"><code class="language-C">sem_wait(sem_t *s) {
-  pthread_mutex_lock(&amp;s-&gt;m);
-  while (s-&gt;count == 0) {
-      pthread_cond_wait(&amp;s-&gt;cv, &amp;s-&gt;m); /*unlock mutex, wait, relock mutex*/
+  pthread_mutex_lock(&amp;amp;s-&amp;gt;m);
+  while (s-&amp;gt;count == 0) {
+      pthread_cond_wait(&amp;amp;s-&amp;gt;cv, &amp;amp;s-&amp;gt;m); /*unlock mutex, wait, relock mutex*/
   }
-  s-&gt;count--;
-  pthread_mutex_unlock(&amp;s-&gt;m);
+  s-&amp;gt;count--;
+  pthread_mutex_unlock(&amp;amp;s-&amp;gt;m);
 }</code></pre>
 
 
 <p>Wait <code>sem_post</code> keeps calling <code>pthread_cond_signal</code> won't that break sem_wait? <br />
 Answer: No! We can't get past the loop until the count is non-zero. In practice this means <code>sem_post</code> would unnecessary call <code>pthread_cond_signal</code> even if there are no waiting threads. A more efficient implementation would only call <code>pthread_cond_signal</code> when necessary i.e.</p>
 <pre class="highlight"><code class="language-C">  /* Did we increment from zero to one- time to signal a thread sleeping inside sem_post */
-  if (s-&gt;count == 1) /* Wake up one waiting thread!*/
-     pthread_cond_signal(&amp;s-&gt;cv);</code></pre>
+  if (s-&amp;gt;count == 1) /* Wake up one waiting thread!*/
+     pthread_cond_signal(&amp;amp;s-&amp;gt;cv);</code></pre>
 
 
 <h2>Other semaphore considerations</h2>

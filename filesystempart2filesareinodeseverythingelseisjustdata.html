@@ -81,7 +81,7 @@ POSIX provides a small set of functions to read the filename and inode number fo
 <h2>How do I find out meta-information about a file (or directory)?</h2>
 <p>Use the stat calls. For example, to find out when my 'notes.txt' file was last accessed -</p>
 <pre class="highlight"><code class="language-C">   struct stat s;
-   stat(&quot;notes.txt&quot;, &amp; s);
+   stat(&quot;notes.txt&quot;, &amp;amp; s);
    printf(&quot;Last accessed %s&quot;, ctime(s.st_atime));</code></pre>
 
 
@@ -95,7 +95,7 @@ POSIX provides a small set of functions to read the filename and inode number fo
 <pre class="highlight"><code class="language-C">   FILE *file = fopen(&quot;notes.txt&quot;, &quot;r&quot;);
    int fd = fileno(file); /* Just for fun - extract the file descriptor from a C FILE struct */
    struct stat s;
-   fstat(fd, &amp; s);
+   fstat(fd, &amp;amp; s);
    printf(&quot;Last accessed %s&quot;, ctime(s.st_atime));</code></pre>
 
 
@@ -120,9 +120,9 @@ POSIX provides a small set of functions to read the filename and inode number fo
 
 <h2>How do I list the contents of a directory ?</h2>
 <p>Let's write our own version of 'ls' to list the contents of a directory.</p>
-<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
-#include &lt;dirent.h&gt;
-#include &lt;stdlib.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;dirent.h&amp;gt;
+#include &amp;lt;stdlib.h&amp;gt;
 int main(int argc, char **argv) {
     if(argc == 1) {
         printf(&quot;Usage: %s [directory]\n&quot;, *argv);
@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
     struct dirent *dp;
     DIR *dirp = opendir(argv[1]);
     while ((dp = readdir(dirp)) != NULL) {
-        puts(dp-&gt;d_name);
+        puts(dp-&amp;gt;d_name);
     }
 
     closedir(dirp);
@@ -142,9 +142,9 @@ int main(int argc, char **argv) {
 <h2>How do I read the contents of a directory?</h2>
 <p>Ans: Use opendir readdir closedir<br />
 For example, here's a very simple implementation of 'ls' to list the contents of a directory.</p>
-<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
-#include &lt;dirent.h&gt;
-#include &lt;stdlib.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;dirent.h&amp;gt;
+#include &amp;lt;stdlib.h&amp;gt;
 int main(int argc, char **argv) {
     if(argc ==1) {
         printf(&quot;Usage: %s [directory]\n&quot;, *argv);
@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
     struct dirent *dp;
     DIR *dirp = opendir(argv[1]);
     while ((dp = readdir(dirp)) != NULL) {
-        printf(&quot;%s %lu\n&quot;, dp-&gt; d_name, (unsigned long)dp-&gt; d_ino );
+        printf(&quot;%s %lu\n&quot;, dp-&amp;gt; d_name, (unsigned long)dp-&amp;gt; d_ino );
     }
 
     closedir(dirp);
@@ -168,8 +168,8 @@ int main(int argc, char **argv) {
     struct dirent *dp;
     DIR *dirp = opendir(directory);
     while ((dp = readdir(dirp)) != NULL) {
-        puts(dp-&gt;d_name);
-        if (!strcmp(dp-&gt;d_name, name)) {
+        puts(dp-&amp;gt;d_name);
+        if (!strcmp(dp-&amp;gt;d_name, name)) {
         return 1; /* Found */
         }
     }
@@ -210,7 +210,7 @@ The <code>readdir</code> function returns "." (current directory) and ".." (pare
 <p>Ans: Use <code>S_ISDIR</code> to check the mode bits stored in the stat structure</p>
 <p>And to check if a file is regular file use <code>S_ISREG</code>,</p>
 <pre class="highlight"><code class="language-C">   struct stat s;
-   if (0 == stat(name, &amp;s)) {
+   if (0 == stat(name, &amp;amp;s)) {
       printf(&quot;%s &quot;, name);
       if (S_ISDIR( s.st_mode)) puts(&quot;is a directory&quot;);
       if (S_ISREG( s.st_mode)) puts(&quot;is a regular file&quot;);

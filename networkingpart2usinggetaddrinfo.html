@@ -81,18 +81,18 @@
 
 
 <p>It's very easy to use. For example, suppose you wanted to find out the numeric IPv4 address of a webserver at <a href="http://www.bbc.com">www.bbc.com</a>. We do this in two stages. First use getaddrinfo to build a linked-list of possible connections. Secondly use <code>getnameinfo</code> to convert the binary address into a readable form.</p>
-<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;sys/types.h&gt;
-#include &lt;sys/socket.h&gt;
-#include &lt;netdb.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;stdlib.h&amp;gt;
+#include &amp;lt;sys/types.h&amp;gt;
+#include &amp;lt;sys/socket.h&amp;gt;
+#include &amp;lt;netdb.h&amp;gt;
 
 struct addrinfo hints, *infoptr; // So no need to use memset global variables
 
 int main() {
   hints.ai_family = AF_INET; // AF_INET means IPv4 only addresses
 
-  int result = getaddrinfo(&quot;www.bbc.com&quot;, NULL, &amp;hints, &amp;infoptr);
+  int result = getaddrinfo(&quot;www.bbc.com&quot;, NULL, &amp;amp;hints, &amp;amp;infoptr);
   if (result) {
     fprintf(stderr, &quot;getaddrinfo: %s\n&quot;, gai_strerror(result));
     exit(1);
@@ -101,9 +101,9 @@ int main() {
   struct addrinfo *p;
   char host[256],service[256];
 
-  for(p = infoptr; p != NULL; p = p-&gt;ai_next) {
+  for(p = infoptr; p != NULL; p = p-&amp;gt;ai_next) {
 
-    getnameinfo(p-&gt;ai_addr, p-&gt;ai_addrlen, host, sizeof(host), service, sizeof(service), NI_NUMERICHOST);
+    getnameinfo(p-&amp;gt;ai_addr, p-&amp;gt;ai_addrlen, host, sizeof(host), service, sizeof(service), NI_NUMERICHOST);
     puts(host);
   }
 
@@ -133,7 +133,7 @@ connect  -- Connect to the remote host using the socket and address information<
 <p>The socket call creates an outgoing socket and returns a descriptor (sometimes called a 'file descriptor') that can be used with <code>read</code> and <code>write</code> etc.In this sense it is the network analog of <code>open</code> that opens a file stream - except that we haven't connected the socket to anything yet!</p>
 <p>Finally the connect call attempts the connection to the remote machine. We pass the original socket descriptor and also the socket address information which is stored inside the addrinfo structure. There are different kinds of socket address structures (e.g. IPv4 vs IPv6) which can require more memory. So in addition to passing the pointer, the size of the structure is also passed:</p>
 <pre class="highlight"><code class="language-C">// Pull out the socket address info from the addrinfo struct:
-connect(sockfd, p-&gt;ai_addr, p-&gt;ai_addrlen)</code></pre>
+connect(sockfd, p-&amp;gt;ai_addr, p-&amp;gt;ai_addrlen)</code></pre>
 
 
 <h2>How do I free the memory allocated for the linked-list of addrinfo structs?</h2>

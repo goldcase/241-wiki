@@ -113,7 +113,7 @@ Only when the child has been 'waited on' will the slot be available again.</p>
 <p>Once a process completes, any of its children will be assigned to "init" - the first process with pid of 1. Thus these children would see getppid() return a value of 1. The init process automatically waits for all of its children, thus removing zombies from the system.</p>
 <h2>How do I prevent zombies? (Warning: Simplified answer)</h2>
 <p>Wait on your child!</p>
-<pre class="highlight"><code class="language-C">waitpid(child, &amp;status, 0); // Clean up and wait for my child process to finish.</code></pre>
+<pre class="highlight"><code class="language-C">waitpid(child, &amp;amp;status, 0); // Clean up and wait for my child process to finish.</code></pre>
 
 
 <p>Note we assume that the only reason to get a SIGCHLD event is that a child has finished (this is not quite true - see man page for more details).</p>
@@ -126,7 +126,7 @@ The parent gets the signal SIGCHLD when a child completes, so the signal handler
 
 void cleanup(int signal) {
   int status;
-  waitpid(child, &amp;status, 0);
+  waitpid(child, &amp;amp;status, 0);
   write(1,&quot;cleanup!\n&quot;,9);
 }
 int main() {
@@ -151,7 +151,7 @@ int main() {
 <p>A more robust code to reap zombies is shown below.</p>
 <pre class="highlight"><code class="language-C">void cleanup(int signal) {
   int status;
-  while (waitpid((pid_t) (-1), 0, WNOHANG) &gt; 0) {}
+  while (waitpid((pid_t) (-1), 0, WNOHANG) &amp;gt; 0) {}
 }</code></pre>          </div>
         </div>
       </main>

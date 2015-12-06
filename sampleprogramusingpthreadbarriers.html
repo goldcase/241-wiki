@@ -67,11 +67,11 @@
             <h3>Sample program using pthread barriers</h3>
 
 <pre class="highlight"><code class="language-C">#define _GNU_SOURCE
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;unistd.h&gt;
-#include &lt;pthread.h&gt;
-#include &lt;time.h&gt;
+#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;stdlib.h&amp;gt;
+#include &amp;lt;unistd.h&amp;gt;
+#include &amp;lt;pthread.h&amp;gt;
+#include &amp;lt;time.h&amp;gt;
 
 #define THREAD_COUNT 4
 
@@ -84,7 +84,7 @@ void* threadFn(void *id_ptr) {
   sleep(wait_sec);
   printf(&quot;thread %d: I'm ready...\n&quot;, thread_id);
 
-  pthread_barrier_wait(&amp;mybarrier);
+  pthread_barrier_wait(&amp;amp;mybarrier);
 
   printf(&quot;thread %d: going!\n&quot;, thread_id);
   return NULL;
@@ -97,24 +97,24 @@ int main() {
   int short_ids[THREAD_COUNT];
 
   srand(time(NULL));
-  pthread_barrier_init(&amp;mybarrier, NULL, THREAD_COUNT + 1);
+  pthread_barrier_init(&amp;amp;mybarrier, NULL, THREAD_COUNT + 1);
 
-  for (i=0; i &lt; THREAD_COUNT; i++) {
+  for (i=0; i &amp;lt; THREAD_COUNT; i++) {
     short_ids[i] = i;
-    pthread_create(&amp;ids[i], NULL, threadFn, &amp;short_ids[i]);
+    pthread_create(&amp;amp;ids[i], NULL, threadFn, &amp;amp;short_ids[i]);
   }
 
   printf(&quot;main() is ready.\n&quot;);
 
-  pthread_barrier_wait(&amp;mybarrier);
+  pthread_barrier_wait(&amp;amp;mybarrier);
 
   printf(&quot;main() is going!\n&quot;);
 
-  for (i=0; i &lt; THREAD_COUNT; i++) {
+  for (i=0; i &amp;lt; THREAD_COUNT; i++) {
     pthread_join(ids[i], NULL);
   }
 
-  pthread_barrier_destroy(&amp;mybarrier);
+  pthread_barrier_destroy(&amp;amp;mybarrier);
 
   return 0;
 }</code></pre>          </div>

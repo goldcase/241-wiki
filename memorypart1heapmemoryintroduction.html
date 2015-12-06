@@ -132,7 +132,7 @@ char *ptr2 = malloc(308); // Contents might now contain existing data and is pro
   // and has no error checking
   void *result = malloc(newsize); 
   size_t oldsize =  ... //(depends on allocator's internal data structure)
-  if (ptr) memcpy(result, ptr, newsize &lt; oldsize ? newsize : oldsize);
+  if (ptr) memcpy(result, ptr, newsize &amp;lt; oldsize ? newsize : oldsize);
   free(ptr);
   return result;
 }</code></pre>

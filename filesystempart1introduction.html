@@ -130,15 +130,11 @@
 </em> 755 - R/W/X user permissions, R/X group permissions, R/X world permissions</p>
 <h2>What is an inode? Which of the above items is stored in the inode?</h2>
 <p>From <a href="http://en.wikipedia.org/wiki/Inode">Wikipedia</a>:</p>
-<blockquote>
-<p><em>In a Unix-style file system, an index node, informally referred to as an inode, is a data structure used to represent a filesystem object, which can be one of various things including a file or a directory. Each inode stores the attributes and disk block location(s) of the filesystem object's data. Filesystem object attributes may include manipulation metadata (e.g. change, access, modify time), as well as owner and permission data (e.g. group-id, user-id, permissions).</em></p>
-</blockquote>
+<p>&gt; <em>In a Unix-style file system, an index node, informally referred to as an inode, is a data structure used to represent a filesystem object, which can be one of various things including a file or a directory. Each inode stores the attributes and disk block location(s) of the filesystem object's data. Filesystem object attributes may include manipulation metadata (e.g. change, access, modify time), as well as owner and permission data (e.g. group-id, user-id, permissions).</em></p>
 <h2>How does inode store the file contents?</h2>
 <p><img alt="" src="http://upload.wikimedia.org/wikipedia/commons/a/a2/Ext2-inode.gif" /></p>
-<p>Image source: <a href="http://en.wikipedia.org/wiki/Ext2">http://en.wikipedia.org/wiki/Ext2</a>  </p>
-<blockquote>
-<p>"All problems in computer science can be solved by another level of indirection." - David Wheeler</p>
-</blockquote>
+<p>Image source: <a href="http://en.wikipedia.org/wiki/Ext2&gt;">http://en.wikipedia.org/wiki/Ext2<br />
+&gt;</a> "All problems in computer science can be solved by another level of indirection." - David Wheeler</p>
 <h2>How many pointers can you store in each indirection table?</h2>
 <p>As a worked example, suppose we divide the disk into 4KB blocks and we want to address up to 2^32 blocks.</p>
 <p>The maximum disk size is 4KB *2^32 = 16TB  (remember 2^10 = 1024)</p>

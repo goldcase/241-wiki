@@ -90,8 +90,8 @@ For example, one CPU might be processing the game AI while another thread is com
 </ul>
 <p>The argument <code>void *(*start_routine) (void *)</code> is difficult to read! It means a pointer that takes a <code>void *</code> pointer and returns a <code>void *</code> pointer. It looks like a function declaration except that the name of the function is wrapped with <code>(* .... )</code></p>
 <p>Here's the simplest example:</p>
-<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
-#include &lt;pthread.h&gt;
+<pre class="highlight"><code class="language-C">#include &amp;lt;stdio.h&amp;gt;
+#include &amp;lt;pthread.h&amp;gt;
 // remember to set compilation option -pthread
 
 void *busy(void *ptr) {
@@ -101,14 +101,14 @@ void *busy(void *ptr) {
 }
 int main() {
     pthread_t id;
-    pthread_create(&amp;id, NULL, busy, &quot;Hi&quot;);
+    pthread_create(&amp;amp;id, NULL, busy, &quot;Hi&quot;);
     while (1) {} // Loop forever
 }</code></pre>
 
 
 <p>If we want to wait for our thread to finish use <code>pthread_join</code></p>
 <pre class="highlight"><code class="language-C">void *result;
-pthread_join(id, &amp;result);</code></pre>
+pthread_join(id, &amp;amp;result);</code></pre>
 
 
 <p>In the above example, <code>result</code> will be <code>null</code> because the busy function returned <code>null</code>.<br />

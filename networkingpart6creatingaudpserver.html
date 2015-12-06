@@ -70,17 +70,17 @@
 <p>There are a variety of function calls available to send UDP sockets. We will use the newer getaddrinfo to help set up a socket structure.</p>
 <p>Remember that UDP is a simple packet-based ('data-gram') protocol ; there is no connection to set up between the two hosts.</p>
 <p>First, initialize the hints addrinfo struct to request an IPv6, passive datagram socket.</p>
-<pre class="highlight"><code class="language-C">memset(&amp;hints, 0, sizeof(hints));
+<pre class="highlight"><code class="language-C">memset(&amp;amp;hints, 0, sizeof(hints));
 hints.ai_family = AF_INET6; // INET for IPv4
 hints.ai_socktype =  SOCK_DGRAM;
 hints.ai_flags =  AI_PASSIVE;</code></pre>
 
 
 <p>Next, use getaddrinfo to specify the port number (we don't need to specify a host as we are creating a server socket, not sending a packet to a remote host).</p>
-<pre class="highlight"><code class="language-C">getaddrinfo(NULL, &quot;300&quot;, &amp;hints, &amp;res);
+<pre class="highlight"><code class="language-C">getaddrinfo(NULL, &quot;300&quot;, &amp;amp;hints, &amp;amp;res);
 
-sockfd = socket(res-&gt;ai_family, res-&gt;ai_socktype, res-&gt;ai_protocol);
-bind(sockfd, res-&gt;ai_addr, res-&gt;ai_addrlen);</code></pre>
+sockfd = socket(res-&amp;gt;ai_family, res-&amp;gt;ai_socktype, res-&amp;gt;ai_protocol);
+bind(sockfd, res-&amp;gt;ai_addr, res-&amp;gt;ai_addrlen);</code></pre>
 
 
 <p>The port number is &lt;1024, so the program will need <code>root</code> privileges. We could have also specified a service name instead of a numeric port value.</p>
@@ -90,7 +90,7 @@ int addrlen = sizeof(addr);
 
 // ssize_t recvfrom(int socket, void* buffer, size_t buflen, int flags, struct sockaddr *addr, socklen_t * address_len);
 
-byte_count = recvfrom(sockfd, buf, sizeof(buf), 0, &amp;addr, &amp;addrlen);</code></pre>
+byte_count = recvfrom(sockfd, buf, sizeof(buf), 0, &amp;amp;addr, &amp;amp;addrlen);</code></pre>
 
 
 <p>The addr struct will hold sender (source) information about the arriving packet.<br />

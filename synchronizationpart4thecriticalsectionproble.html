@@ -75,8 +75,8 @@ pthread_mutex_unlock() - let other waiting threads continue</code></pre>
 
 
 <p>How would we implement these lock and unlock calls? Can we create an algorithm that assures mutual exclusion? An incorrect implementation is shown below, </p>
-<pre class="highlight"><code class="language-C">pthread_mutex_lock(p_mutex_t *m)     { while(m-&gt;lock) {}; m-&gt;lock = 1;}
-pthread_mutex_unlock(p_mutex_t *m)   { m-&gt;lock = 0; }</code></pre>
+<pre class="highlight"><code class="language-C">pthread_mutex_lock(p_mutex_t *m)     { while(m-&amp;gt;lock) {}; m-&amp;gt;lock = 1;}
+pthread_mutex_unlock(p_mutex_t *m)   { m-&amp;gt;lock = 0; }</code></pre>
 
 
 <p>At first glance, the code appears to work; if one thread attempts to locks the mutex, a later thread must wait until the lock is cleared. However this implementation <em>does not satisfy Mutual Exclusion</em>. Let's take a close look at this 'implementation' from the point of view of two threads running around the same time. In the table below times runs from top to bottom-</p>
