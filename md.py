@@ -24,7 +24,7 @@ with open(os.path.join(cur_dir, TAIL_FILE), "r") as tail:
     tail_text = tail.read()
 
 def escape_url(url):
-    return urllib.quote(url, safe="")
+    return url
 
 def sanitize(filename):
     return re.sub(r'\W+', '', filename.lower())
