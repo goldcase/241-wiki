@@ -24,21 +24,26 @@ with open(os.path.join(cur_dir, HEAD_FILE), "r") as head:
 with open(os.path.join(cur_dir, TAIL_FILE), "r") as tail:
     tail_text = tail.read()
 
+def sanitize(filename):
+    return filename.replace(":", "").lower()
 
 for l in files:
     with open(os.path.join(md_dir, l), "r") as f:
         string = f.read()
         html = md.reset().convert(string)
-        stripped = l.rstrip(".md")
+        sanitized = sanitize(l)
+        stripped = sanitized.rstrip(".md")
         with open(os.path.join(output_dir, stripped + ".html"), "w") as f_target:
-            f_target.write(head_text.format(stripped.replace("-", " ")) + html + tail_text)
+            f_target.write(head_text.format(l.rstrip(".md").replace("-", " ")) + html + tail_text)
 
 def create_index(filenames):
     with open(os.path.join(output_dir, "index.html"), "w") as idx_file:
         idx_file.write(head_text.format("Table of Contents") + "<br /><ol>")
         for filename in filenames:
             html_filename = filename.rstrip(".md") + ".html"
-            idx_file.write("<li><a href='" + html_filename + "'>" + html_filename + "</a></li><br />")
+            sanitized = sanitize(filename)
+            stripped = sanitized.rstrip(".md") + ".html"
+            idx_file.write("<li><a href='{0}'>{1}</a></li><br />".format(stripped, html_filename))
         idx_file.write("</ol><br />" + tail_text)
 
 if __name__ == "__main__":
