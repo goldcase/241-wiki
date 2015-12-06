@@ -81,6 +81,32 @@
 
 <h2>Q 1.7</h2>
 <p>In addition to the function arguments what else is stored on a thread's stack?</p>
+<h2>Q 1.8</h2>
+<p>Implement a version of <code>char* strcat(char*dest, const char*src)</code> using only <code>strcpy</code>  <code>strlen</code> and pointer arithmetic</p>
+<div class="highlight"><pre><span class="kt">char</span><span class="o">*</span> <span class="nf">mystrcat</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="n">dest</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="n">src</span><span class="p">)</span> <span class="p">{</span>
+
+  <span class="o">?</span> <span class="n">Use</span> <span class="n">strcpy</span> <span class="n">strlen</span> <span class="n">here</span>
+
+  <span class="k">return</span> <span class="n">dest</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h2>Q 1.9</h2>
+<p>Implement version of size_t strlen(const char*) using a loop and no function calls.</p>
+<div class="highlight"><pre><span class="kt">size_t</span> <span class="nf">mystrlen</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+
+<span class="p">}</span>
+<span class="cp">## Q 1.10</span>
+<span class="n">Identify</span> <span class="n">the</span> <span class="n">three</span> <span class="n">bugs</span> <span class="n">in</span> <span class="n">the</span> <span class="n">following</span> <span class="n">implementation</span> <span class="n">of</span> <span class="err">`</span><span class="n">strcpy</span><span class="err">`</span><span class="p">.</span>
+<span class="err">````</span><span class="n">C</span>
+<span class="kt">char</span><span class="o">*</span> <span class="n">strcpy</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">dest</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">src</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">while</span><span class="p">(</span><span class="o">*</span><span class="n">src</span><span class="p">)</span> <span class="p">{</span> <span class="o">*</span><span class="n">dest</span><span class="o">++</span> <span class="o">=</span> <span class="o">*</span><span class="n">src</span><span class="o">++</span><span class="p">;</span> <span class="p">}</span>
+  <span class="k">return</span> <span class="n">dest</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
 <h1>Printing</h1>
 <h2>Q 2.1</h2>
 <p>Spot the error!</p>
@@ -104,13 +130,15 @@
 <h1>Printing to a string</h1>
 <h2>Q 4.1</h2>
 <p>How would you print the values of variables a,mesg,val and ptr to a string? Print a as an integer, mesg as C string, val as a double val and ptr as a hexadecimal pointer. You may assume the mesg points to a short C string(&lt;50 characters).<br />
-Bonus: How would you make this code more robust or able to cope with?<br />
-```C<br />
-char<em> toString(int a, char</em>mesg, double val, void<em> ptr) {<br />
-   char</em> result = malloc( strlen(mesg) + 50);<br />
-    _____<br />
-   return result;<br />
-}</p>
+Bonus: How would you make this code more robust or able to cope with?</p>
+<div class="highlight"><pre><span class="kt">char</span><span class="o">*</span> <span class="nf">toString</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span><span class="n">mesg</span><span class="p">,</span> <span class="kt">double</span> <span class="n">val</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+   <span class="kt">char</span><span class="o">*</span> <span class="n">result</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span> <span class="n">strlen</span><span class="p">(</span><span class="n">mesg</span><span class="p">)</span> <span class="o">+</span> <span class="mi">50</span><span class="p">);</span>
+    <span class="n">_____</span>
+   <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
 <h1>Input parsing</h1>
 <h2>Q 5.1</h2>
 <p>Why should you check the return value of sscanf and scanf?</p>

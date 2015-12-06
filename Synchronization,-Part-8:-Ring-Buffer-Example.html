@@ -150,7 +150,7 @@ For clarity <code>pthread_mutex</code> is shortened to <code>p_m</code> and we a
 </pre></div>
 
 
-<p>The enqueue method is shown below. Notice,<br />
+<p>The enqueue method is shown below. Notice:<br />
 <em> The lock is only held during the critical section (access to the data structure).<br />
 </em> A complete implementation would need to guard against early returns from <code>sem_wait</code> due to POSIX signals.</p>
 <div class="highlight"><pre><span class="n">enqueue</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">value</span><span class="p">){</span>

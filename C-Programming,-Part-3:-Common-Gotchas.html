@@ -76,7 +76,7 @@ After the function returns it is an error to continue to use the memory.</p>
 </pre></div>
 
 
-<h4>Strings require strlen(s)+1 bytes</h4>
+<h4>Strings require <code>strlen(s)+1</code> bytes</h4>
 <p>Every string must have a null byte after the last characters. To store the string <code>"Hi"</code> it takes 3 bytes: <code>[H] [i] [\0]</code>.</p>
 <div class="highlight"><pre>  <span class="kt">char</span> <span class="o">*</span><span class="nf">strdup</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">s</span><span class="p">)</span> <span class="p">{</span>  <span class="cm">/* return a copy of &#39;input&#39; */</span>
     <span class="kt">char</span> <span class="o">*</span><span class="n">copy</span><span class="p">;</span>
@@ -162,7 +162,7 @@ endsnippet
 </pre></div>
 
 
-<h2>Equal vs equality</h2>
+<h2>Equal vs. equality</h2>
 <div class="highlight"><pre><span class="kt">int</span> <span class="n">answer</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span> <span class="c1">// Will print out the answer.</span>
 <span class="k">if</span> <span class="p">(</span><span class="n">answer</span> <span class="o">=</span> <span class="mi">42</span><span class="p">)</span> <span class="p">{</span> <span class="n">printf</span><span class="p">(</span><span class="s">&quot;I&#39;ve solved the answer! It&#39;s %d&quot;</span><span class="p">,</span> <span class="n">answer</span><span class="p">);}</span>
 </pre></div>
