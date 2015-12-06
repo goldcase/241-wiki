@@ -1,6 +1,4 @@
-import markdown, gfm, os
-import mcq_hammertime
-import sys
+import markdown, gfm, os, urllib, mcq_hammertime, sys, re
 from io import open
 
 reload(sys)
@@ -25,15 +23,18 @@ with open(os.path.join(cur_dir, HEAD_FILE), "r") as head:
 with open(os.path.join(cur_dir, TAIL_FILE), "r") as tail:
     tail_text = tail.read()
 
+def escape_url(url):
+    return urllib.quote(url, safe="")
+
 def sanitize(filename):
-    return filename.replace(":", "").lower()
+    return re.sub(r'\W+', '', filename.lower())
 
 for l in files:
     with open(os.path.join(md_dir, l), mode="r", encoding="utf8") as f:
         string = f.read()
         html = md.reset().convert(string)
         sanitized = sanitize(l)
-        stripped = sanitized.rstrip(".md")
+        stripped = escape_url(sanitized.rstrip(".md"))
         with open(os.path.join(output_dir, stripped + ".html"), mode="w") as f_target:
             f_target.write(head_text.format(l.rstrip(".md").replace("-", " ")) + html + tail_text)
 
@@ -43,8 +44,8 @@ def create_index(filenames):
         for filename in filenames:
             html_filename = filename.rstrip(".md") + ".html"
             sanitized = sanitize(filename)
-            stripped = sanitized.rstrip(".md") + ".html"
-            idx_file.write(unicode("<li><a href='{0}'>{1}</a></li><br />".format(stripped, html_filename)))
+            stripped = escape_url(sanitized.rstrip(".md")) + ".html"
+            idx_file.write(unicode("<li><a href='{0}'>{1}</a></li><br />".format(unicode(stripped), html_filename)))
         idx_file.write("</ol><br />" + tail_text)
 
 if __name__ == "__main__":
