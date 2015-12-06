@@ -18,26 +18,28 @@ files = [f for f in os.listdir(md_dir) if os.path.isfile(os.path.join(md_dir, f)
 mcq = mcq_hammertime.MCExtension()
 md = markdown.Markdown(extensions = ['gfm', mcq])
 
+with open(os.path.join(cur_dir, HEAD_FILE), "r") as head:
+    head_text = head.read()
+
+with open(os.path.join(cur_dir, TAIL_FILE), "r") as tail:
+    tail_text = tail.read()
+
+
 for l in files:
     with open(os.path.join(md_dir, l), "r") as f:
         string = f.read()
         html = md.reset().convert(string)
-        with open(os.path.join(output_dir, l.rstrip(".md") + ".html"), "w") as f_target:
-            with open(os.path.join(cur_dir, HEAD_FILE), "r") as head:
-                f_target.write(head.read().format(l.rstrip(".md")))
-            f_target.write(html)
-            with open(os.path.join(cur_dir, TAIL_FILE), "r") as tail:
-                f_target.write(tail.read())
+        stripped = l.rstrip(".md")
+        with open(os.path.join(output_dir, stripped + ".html"), "w") as f_target:
+            f_target.write(head_text.format(stripped.replace("-", " ")) + html + tail_text)
 
 def create_index(filenames):
     with open(os.path.join(output_dir, "index.html"), "w") as idx_file:
-        with open(os.path.join(cur_dir, HEAD_FILE), "r") as head:
-            idx_file.write(head.read().format(l.rstrip(".md")))
+        idx_file.write(head_text.format("Table of Contents") + "<br /><ol>")
         for filename in filenames:
             html_filename = filename.rstrip(".md") + ".html"
-            idx_file.write("<a href='" + html_filename + "'>" + html_filename + "</a><br />")
-        with open(os.path.join(cur_dir, TAIL_FILE), "r") as tail:
-            idx_file.write(tail.read())
+            idx_file.write("<li><a href='" + html_filename + "'>" + html_filename + "</a></li><br />")
+        idx_file.write("</ol><br />" + tail_text)
 
 if __name__ == "__main__":
     create_index(files)
