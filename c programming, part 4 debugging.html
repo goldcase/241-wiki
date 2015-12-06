@@ -1,0 +1,143 @@
+<!doctype html>
+<!--
+  Material Design Lite
+  Copyright 2015 Google Inc. All rights reserved.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="A front-end template that helps you build fast, modern mobile web apps.">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>C Programming, Part 4: Debugging</title>
+
+    <!-- Add to homescreen for Chrome on Android -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="icon" sizes="192x192" href="images/android-desktop.png">
+
+    <!-- Add to homescreen for Safari on iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Material Design Lite">
+    <link rel="apple-touch-icon-precomposed" href="images/ios-desktop.png">
+
+    <link rel="shortcut icon" href="images/favicon.png">
+
+    <!-- SEO: If your mobile URL is different from the desktop URL, add a canonical link to the desktop page https://developers.google.com/webmasters/smartphone-sites/feature-phones -->
+    <!--
+    <link rel="canonical" href="http://www.example.com/">
+    -->
+
+    <link href='//fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en' rel='stylesheet' type='text/css'>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
+    <link rel="stylesheet" href="material.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/buttons-min.css">
+  </head>
+  <body>
+    <div class="demo-layout mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--grey-100">
+      <header class="demo-header mdl-layout__header mdl-layout__header--scroll mdl-color--grey-100 mdl-color-text--grey-800">
+        <div class="mdl-layout__header-row">
+        <span class="mdl-layout-title">C Programming, Part 4: Debugging</span>
+          <div class="mdl-layout-spacer"></div>
+        </div>
+      </header>
+      <div class="demo-ribbon"></div>
+      <main class="demo-main mdl-layout__content">
+        <div class="demo-container mdl-grid">
+          <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
+          <div class="demo-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
+            <div class="demo-crumbs mdl-color-text--grey-500">
+                CS 241 &gt; Wikibook &gt; C Programming, Part 4: Debugging
+            </div>
+            <h3>C Programming, Part 4: Debugging</h3>
+
+<h2>The Hitchhiker's Guide to Debugging C Programs</h2>
+<p>Feel free to add anything that you found helpful in debugging C programs including but not limited to, debugger usage, recognizing common error types, gotchas, and effective googling tips.</p>
+<ol>
+<li>
+<p>Make your code modular using helper functions. If there is a repeated task (getting the pointers to contiguous blocks in MP2 for example), make them helper functions. And make sure each function does one thing very well, so that you don't have to debug twice.</p>
+</li>
+<li>
+<p>Use assertions to make sure your code works up to a certain point -- and importantly, to make sure you don't break it later. For example, if your data structure is a doubly linked list, you can do something like, assert(node-&gt;size == node-&gt;next-&gt;prev-&gt;size) to assert that the next node has a pointer to the current node. You can also check the pointer is pointing to an expected range of memory address, not null, -&gt;size is reasonable etc.<br />
+The NDEBUG macro will disable all assertions, so don't forget to set that once you finish debugging. <a href="http://www.cplusplus.com/reference/cassert/assert/">http://www.cplusplus.com/reference/cassert/assert/</a></p>
+</li>
+</ol>
+<h3>GDB</h3>
+<p>Introduction: <a href="http://www.cs.cmu.edu/~gilpin/tutorial/">http://www.cs.cmu.edu/~gilpin/tutorial/</a></p>
+<h4>Setting breakpoints programmatically</h4>
+<p>A very useful trick when debugging complex C programs with GDB is setting breakpoints in the source code.</p>
+<div class="highlight"><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">val</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="mi">42</span><span class="p">;</span>
+    <span class="n">asm</span><span class="p">(</span><span class="s">&quot;int $3&quot;</span><span class="p">);</span> <span class="c1">// set a breakpoint here</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="mi">7</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span class="nv">$ </span>gcc main.c -g -o main <span class="o">&amp;&amp;</span> ./main
+<span class="o">(</span>gdb<span class="o">)</span> r
+<span class="o">[</span>...<span class="o">]</span>
+Program received signal SIGTRAP, Trace/breakpoint trap.
+main <span class="o">()</span> at main.c:6
+<span class="m">6</span>       <span class="nv">val</span> <span class="o">=</span> 7<span class="p">;</span>
+<span class="o">(</span>gdb<span class="o">)</span> p val
+<span class="nv">$1</span> <span class="o">=</span> 42
+</pre></div>
+
+
+<h4>Checking memory content</h4>
+<p><a href="http://www.delorie.com/gnu/docs/gdb/gdb_56.html">http://www.delorie.com/gnu/docs/gdb/gdb_56.html</a></p>
+<p>For example,</p>
+<div class="highlight"><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">char</span> <span class="n">bad_string</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="sc">&#39;C&#39;</span><span class="p">,</span> <span class="sc">&#39;a&#39;</span><span class="p">,</span> <span class="sc">&#39;t&#39;</span><span class="p">};</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s&quot;</span><span class="p">,</span> <span class="n">bad_string</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span class="nv">$ </span>gcc main.c -g -o main <span class="o">&amp;&amp;</span> ./main
+<span class="nv">$ </span>Cat ZVQ� <span class="err">$</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span class="o">(</span>gdb<span class="o">)</span> l
+<span class="m">1</span>   <span class="c">#include &lt;stdio.h&gt;</span>
+<span class="m">2</span>   int main<span class="o">()</span> <span class="o">{</span>
+<span class="m">3</span>       char bad_string<span class="o">[</span>3<span class="o">]</span> <span class="o">=</span> <span class="o">{</span><span class="s1">&#39;C&#39;</span>, <span class="s1">&#39;a&#39;</span>, <span class="s1">&#39;t&#39;</span><span class="o">}</span><span class="p">;</span>
+<span class="m">4</span>       <span class="nb">printf</span><span class="o">(</span><span class="s2">&quot;%s&quot;</span>, bad_string<span class="o">)</span><span class="p">;</span>
+<span class="m">5</span>   <span class="o">}</span>
+<span class="o">(</span>gdb<span class="o">)</span> b 4
+Breakpoint <span class="m">1</span> at 0x100000f57: file main.c, line 4.
+<span class="o">(</span>gdb<span class="o">)</span> r
+<span class="o">[</span>...<span class="o">]</span>
+Breakpoint 1, main <span class="o">()</span> at main.c:4
+<span class="m">4</span>       <span class="nb">printf</span><span class="o">(</span><span class="s2">&quot;%s&quot;</span>, bad_string<span class="o">)</span><span class="p">;</span>
+<span class="o">(</span>gdb<span class="o">)</span> x/16xb bad_string
+0x7fff5fbff9cd: 0x63    0x61    0x74    0xe0    0xf9    0xbf    0x5f    0xff
+0x7fff5fbff9d5: 0x7f    0x00    0x00    0xfd    0xb5    0x23    0x89    0xff
+</pre></div>
+
+
+<p>Here, by using the <code>x</code> command with parameters <code>16xb</code>, we can see that starting at memory address <code>0x7fff5fbff9c</code> (value of <code>bad_string</code>), printf would actually see the following sequence of bytes as a string because we provided a malformed string without a null terminator.</p>
+<p><code>0x43 0x61 0x74 0xe0 0xf9 0xbf 0x5f 0xff 0x7f 0x00</code></p>          </div>
+        </div>
+      </main>
+    </div>
+    <script src="check_mc.js"></script>
+  </body>
+</html>

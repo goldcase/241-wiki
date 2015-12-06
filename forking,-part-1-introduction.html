@@ -1,0 +1,232 @@
+<!doctype html>
+<!--
+  Material Design Lite
+  Copyright 2015 Google Inc. All rights reserved.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="A front-end template that helps you build fast, modern mobile web apps.">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Forking, Part 1: Introduction</title>
+
+    <!-- Add to homescreen for Chrome on Android -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="icon" sizes="192x192" href="images/android-desktop.png">
+
+    <!-- Add to homescreen for Safari on iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Material Design Lite">
+    <link rel="apple-touch-icon-precomposed" href="images/ios-desktop.png">
+
+    <link rel="shortcut icon" href="images/favicon.png">
+
+    <!-- SEO: If your mobile URL is different from the desktop URL, add a canonical link to the desktop page https://developers.google.com/webmasters/smartphone-sites/feature-phones -->
+    <!--
+    <link rel="canonical" href="http://www.example.com/">
+    -->
+
+    <link href='//fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en' rel='stylesheet' type='text/css'>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
+    <link rel="stylesheet" href="material.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/buttons-min.css">
+  </head>
+  <body>
+    <div class="demo-layout mdl-layout mdl-layout--fixed-header mdl-js-layout mdl-color--grey-100">
+      <header class="demo-header mdl-layout__header mdl-layout__header--scroll mdl-color--grey-100 mdl-color-text--grey-800">
+        <div class="mdl-layout__header-row">
+        <span class="mdl-layout-title">Forking, Part 1: Introduction</span>
+          <div class="mdl-layout-spacer"></div>
+        </div>
+      </header>
+      <div class="demo-ribbon"></div>
+      <main class="demo-main mdl-layout__content">
+        <div class="demo-container mdl-grid">
+          <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
+          <div class="demo-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
+            <div class="demo-crumbs mdl-color-text--grey-500">
+                CS 241 &gt; Wikibook &gt; Forking, Part 1: Introduction
+            </div>
+            <h3>Forking, Part 1: Introduction</h3>
+
+<h2>A word of warning</h2>
+<p>Process forking is a very powerful (and very dangerous) tool. If you mess up and cause a fork bomb (explained later on this page), <strong>you can bring down the entire system</strong>. To reduce the chances of this, limit your maximum number of processes to a small number e.g<br />
+ 40 by typing "ulimit -u 40" into a command line.</p>
+<p>When testing fork() code, ensure that you have either root and/or physical access to the machine involved. If you must work on fork () code remotely, remember that <strong>kill -9 -1</strong> will save you in the event of an emergency.</p>
+<p>TL;DR: Fork can be <strong>extremely</strong> dangerous if you aren't prepared for it. <strong>You have been warned.</strong></p>
+<h2>What does fork do?</h2>
+<p>The <code>fork</code> system call clones the current process to create a new process. It creates a new process (the child process) by duplicating the state of the existing process with a few minor differences (discussed below). The child process does not start from main. Instead it returns from <code>fork()</code> just as the parent process does.</p>
+<h2>What is the simplest <code>fork()</code> example?</h2>
+<p>Here's a very simple example...</p>
+<div class="highlight"><pre><span class="n">printf</span><span class="p">(</span><span class="s">&quot;I&#39;m printed once!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="n">fork</span><span class="p">();</span>
+<span class="c1">// Now there are two processes running</span>
+<span class="c1">// and each process will print out the next line.</span>
+<span class="n">printf</span><span class="p">(</span><span class="s">&quot;You see this line twice!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</pre></div>
+
+
+<h2>Why does this example print 42 twice?</h2>
+<p>The following program prints out 42 twice - but the <code>fork()</code> is after the <code>printf</code>!? Why?</p>
+<div class="highlight"><pre><span class="cp">#include &lt;unistd.h&gt; </span><span class="cm">/*fork declared here*/</span><span class="cp"></span>
+<span class="cp">#include &lt;stdio.h&gt; </span><span class="cm">/* printf declared here*/</span><span class="cp"></span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+   <span class="kt">int</span> <span class="n">answer</span> <span class="o">=</span> <span class="mi">84</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">;</span>
+   <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Answer: %d&quot;</span><span class="p">,</span> <span class="n">answer</span><span class="p">);</span>
+   <span class="n">fork</span><span class="p">();</span>
+   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The <code>printf</code> line <em>is</em> executed only once however notice that the printed contents is not flushed to standard out (there's no newline printed, we didn't call <code>fflush</code>, or change the buffering mode).<br />
+The output text is therefore in still in process memory waiting to be sent.<br />
+When <code>fork()</code> is executed the entire process memory is duplicated including the buffer. Thus the child process starts with a non-empty output buffer which will be flushed when the program exits.</p>
+<h2>How do you write code that is different for the parent and child process?</h2>
+<p>Check the return value of <code>fork()</code>. Return value -1= failed; 0= in child process; positive = in parent process (and the return value is the child process id).  Here's one way to remember which is which:</p>
+<p>The child process can find its parent - the original process that was duplicated -  by calling getppid() - so does not need any additional return information from <code>fork()</code>. The parent process however can only find out the id of the new child process from the return value of <code>fork</code>:</p>
+<div class="highlight"><pre><span class="kt">pid_t</span> <span class="n">id</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">id</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// fork failed </span>
+<span class="k">if</span> <span class="p">(</span><span class="n">id</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+<span class="p">{</span> 
+<span class="c1">// I&#39;m the original parent and </span>
+<span class="c1">// I just created a child process with id &#39;id&#39;</span>
+<span class="c1">// Use waitpid to wait for the child to finish</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="c1">// returned zero</span>
+<span class="c1">// I must be the newly made child process</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h2>What is a fork bomb ?</h2>
+<p>A 'fork bomb' is when you attempt to create an infinite number of processes. A simple example is shown below:</p>
+<div class="highlight"><pre>while (1) fork();
+</pre></div>
+
+
+<p>This will often bring a system to a near-standstill as it attempts to allocate CPU time and memory to a very large number of processes that are ready to run. Comment: System administrators don't like fork-bombs and may set upper limits on the number of processes each user can have or may revoke login rights because it creates a disturbance in the force for other users' programs. You can also limit the number of child processes created by using <code>setrlimit()</code>.</p>
+<p>fork bombs are not necessarily malicious - they occasionally occur due to student coding errors.</p>
+<p>Angrave suggests that the Matrix trilogy, where the machine and man finally work together to defeat the multiplying Agent-Smith, was a cinematic plot based on an AI-driven fork-bomb.</p>
+<h2>How does the parent process wait for the child to finish?</h2>
+<p>Use <code>waitpid</code> (or <code>wait</code>).</p>
+<div class="highlight"><pre><span class="kt">pid_t</span> <span class="n">child_id</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">child_id</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span> <span class="n">perror</span><span class="p">(</span><span class="s">&quot;fork&quot;</span><span class="p">);</span> <span class="n">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);}</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">child_id</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> 
+  <span class="c1">// We have a child! Get their exit code</span>
+  <span class="kt">int</span> <span class="n">status</span><span class="p">;</span> 
+  <span class="n">waitpid</span><span class="p">(</span> <span class="n">child_id</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span><span class="p">,</span> <span class="mi">0</span> <span class="p">);</span>
+  <span class="c1">// code not shown to get exit status from child</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="c1">// In child ...</span>
+  <span class="c1">// start calculation</span>
+  <span class="n">exit</span><span class="p">(</span><span class="mi">123</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h2>Can I make the child process execute another program?</h2>
+<p>Yes. Use one of the <a href="http://man7.org/linux/man-pages/man3/exec.3.html"><code>exec</code></a> functions after forking. The <code>exec</code> set of functions replaces the process image with the the process image of what is being called. This means that any lines of code after the <code>exec</code> call are replaced. Any other work you want the child process to do should be done before the <code>exec</code> call.  </p>
+<div class="highlight"><pre><span class="cp">#include &lt;unistd.h&gt;</span>
+<span class="cp">#include &lt;sys/types.h&gt; </span>
+<span class="cp">#include &lt;sys/wait.h&gt;</span>
+<span class="cp">#include &lt;stdlib.h&gt;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">pid_t</span> <span class="n">child</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">child</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">return</span> <span class="n">EXIT_FAILURE</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">child</span><span class="p">)</span> <span class="p">{</span> <span class="cm">/* I have a child! */</span>
+    <span class="kt">int</span> <span class="n">status</span><span class="p">;</span>
+    <span class="n">waitpid</span><span class="p">(</span><span class="n">child</span> <span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span> <span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">EXIT_SUCCESS</span><span class="p">;</span>
+
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="cm">/* I am the child */</span>
+    <span class="c1">// Other versions of exec pass in arguments as arrays</span>
+    <span class="c1">// Remember first arg is the program name</span>
+    <span class="c1">// Last arg must be a char pointer to NULL</span>
+
+    <span class="n">execl</span><span class="p">(</span><span class="s">&quot;/bin/ls&quot;</span><span class="p">,</span> <span class="s">&quot;ls&quot;</span><span class="p">,</span><span class="s">&quot;-alh&quot;</span><span class="p">,</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span> <span class="nb">NULL</span><span class="p">);</span>
+
+    <span class="c1">// If we get to this line, something went wrong!</span>
+    <span class="n">perror</span><span class="p">(</span><span class="s">&quot;exec failed!&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h2>A simpler way to execute another program</h2>
+<p>Use <code>system</code>!!! Here is how to use it:</p>
+<div class="highlight"><pre><span class="cp">#include &lt;unistd.h&gt;</span>
+<span class="cp">#include &lt;stdlib.h&gt;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">system</span><span class="p">(</span><span class="s">&quot;/bin/ls&quot;</span><span class="p">);</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The <code>system</code> call would fork, exec the command passed by parameter and the parent process would wait for this to finish. This also means that <code>system</code> is a blocking call - The parent process can't continue until the process started by <code>system</code> exits. This may be useful or it may not be, use with caution.</p>
+<h2>What is the silliest fork example?</h2>
+<p>A slightly silly example is shown below. What will it print? Try it with multiple arguments to your program.</p>
+<div class="highlight"><pre><span class="cp">#include &lt;unistd.h&gt;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">pid_t</span> <span class="n">id</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">status</span><span class="p">;</span> 
+  <span class="k">while</span> <span class="p">(</span><span class="o">--</span><span class="n">argc</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">id</span><span class="o">=</span><span class="n">fork</span><span class="p">()))</span> <span class="p">{</span>
+    <span class="n">waitpid</span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="o">&amp;</span><span class="n">status</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span> <span class="cm">/* Wait for child*/</span>
+  <span class="p">}</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d:%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="n">argc</span><span class="p">]);</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The amazing parallel apparent-O(N) <em>sleepsort</em> is today's silly winner. First published on <a href="https://dis.4chan.org/read/prog/1295544154">4chan in 2011 </a>. A version of this awful but amusing sorting algorithm is shown below.</p>
+<div class="highlight"><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">c</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">v</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="k">while</span> <span class="p">(</span><span class="o">--</span><span class="n">c</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">fork</span><span class="p">());</span>
+        <span class="kt">int</span> <span class="n">val</span>  <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="n">c</span><span class="p">]);</span>
+        <span class="n">sleep</span><span class="p">(</span><span class="n">val</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h2>What is different in the child process than the parent process?</h2>
+<p>The key differences include:<br />
+<em> The process id returned by <code>getpid()</code>. The parent process id returned by <code>getppid()</code>.<br />
+</em> The parent is notified via a signal when the child process finishes but not vice versa.<br />
+* The child does not inherit pending signals or timer alarms.<br />
+For a complete list see the <a href="http://man7.org/linux/man-pages/man2/fork.2.html">fork man page</a></p>
+<h1>Do child processes share open filehandles?</h1>
+<p>Yes! In fact both processes use the same underlying kernel file descriptor. For example if one process rewinds the random access position back to the beginning of the file, then both processes are affected.</p>
+<p>Both child and parent should <code>close</code> (or <code>fclose</code>) their file descriptors or file handle respectively.</p>
+<h2>How can I find out more?</h2>
+<p>Read the man pages!<br />
+<em> <a href="http://man7.org/linux/man-pages/man2/fork.2.html">fork</a><br />
+</em> <a href="http://man7.org/linux/man-pages/man3/exec.3.html">exec</a><br />
+* <a href="http://man7.org/linux/man-pages/man2/wait.2.html">wait</a></p>          </div>
+        </div>
+      </main>
+    </div>
+    <script src="check_mc.js"></script>
+  </body>
+</html>
