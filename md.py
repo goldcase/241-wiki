@@ -32,7 +32,7 @@ for l in files:
 def create_index(filenames):
     with open(os.path.join(output_dir, "index.html"), "w") as idx_file:
         with open(os.path.join(cur_dir, HEAD_FILE), "r") as head:
-            idx_file.write(head.read().format("Table of Contents"))
+            idx_file.write(head.read().format(l.rstrip(".md")))
         for filename in filenames:
             html_filename = filename.rstrip(".md") + ".html"
             idx_file.write("<a href='" + html_filename + "'>" + html_filename + "</a><br />")
