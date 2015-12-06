@@ -74,16 +74,15 @@
 <p>This page introduces unnamed semaphores. Unfortunately Mac OS X does not support these yet.</p>
 <p>First decide if the initial value should be zero or some other value (e.g. the number of remaining spaces in an array).<br />
 Unlike pthread mutex there are not shortcuts to creating a semaphore - use <code>sem_init</code></p>
-<div class="highlight"><pre><span class="cp">#include &lt;semaphore.h&gt;</span>
+<pre class="highlight"><code class="language-C">#include &lt;semaphore.h&gt;
 
-<span class="kt">sem_t</span> <span class="n">s</span><span class="p">;</span>
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-  <span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span> <span class="c1">// returns -1 (=FAILED) on OS X</span>
-  <span class="n">sem_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">);</span> <span class="c1">// Could do this 10 times without blocking</span>
-  <span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">);</span> <span class="c1">// Announce that we&#39;ve finished (and one more resource item is available; increment count)</span>
-  <span class="n">sem_destroy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">);</span> <span class="c1">// release resources of the semaphore</span>
-<span class="p">}</span>
-</pre></div>
+sem_t s;
+int main() {
+  sem_init(&amp;s, 0, 10); // returns -1 (=FAILED) on OS X
+  sem_wait(&amp;s); // Could do this 10 times without blocking
+  sem_post(&amp;s); // Announce that we've finished (and one more resource item is available; increment count)
+  sem_destroy(&amp;s); // release resources of the semaphore
+}</code></pre>
 
 
 <h2>Can I call wait and post from different threads?</h2>
@@ -97,39 +96,38 @@ Unlike pthread mutex there are not shortcuts to creating a semaphore - use <code
 <p>Yes! <code>sem_post</code> is one of a handful of functions that can be correctly used inside a signal handler.<br />
 This means we can release a waiting thread which can now make all of the calls that we were not<br />
 allowed to call inside the signal handler itself (e.g. <code>printf</code>).</p>
-<div class="highlight"><pre><span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;pthread.h&gt;</span>
-<span class="cp">#include &lt;signal.h&gt;</span>
-<span class="cp">#include &lt;semaphore.h&gt;</span>
-<span class="cp">#include &lt;unistd.h&gt;</span>
+<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
+#include &lt;pthread.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;semaphore.h&gt;
+#include &lt;unistd.h&gt;
 
-<span class="kt">sem_t</span> <span class="n">s</span><span class="p">;</span>
+sem_t s;
 
-<span class="kt">void</span> <span class="nf">handler</span><span class="p">(</span><span class="kt">int</span> <span class="n">signal</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">);</span> <span class="cm">/* Release the Kraken! */</span>
-<span class="p">}</span>
+void handler(int signal)
+{
+    sem_post(&amp;s); /* Release the Kraken! */
+}
 
-<span class="kt">void</span> <span class="o">*</span><span class="nf">singsong</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">param</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="n">sem_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;I had to wait until your signal released me!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
-<span class="p">}</span>
+void *singsong(void *param)
+{
+    sem_wait(&amp;s);
+    printf(&quot;I had to wait until your signal released me!\n&quot;);
+}
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="kt">int</span> <span class="n">ok</span> <span class="o">=</span> <span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span> <span class="cm">/* Initial value of zero*/</span><span class="p">);</span> 
-    <span class="k">if</span> <span class="p">(</span><span class="n">ok</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-       <span class="n">perror</span><span class="p">(</span><span class="s">&quot;Could not create unnamed semaphore&quot;</span><span class="p">);</span>
-       <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="n">signal</span><span class="p">(</span><span class="n">SIGINT</span><span class="p">,</span> <span class="n">handler</span><span class="p">);</span> <span class="c1">// Too simple! See note below</span>
+int main()
+{
+    int ok = sem_init(&amp;s, 0, 0 /* Initial value of zero*/); 
+    if (ok == -1) {
+       perror(&quot;Could not create unnamed semaphore&quot;);
+       return 1;
+    }
+    signal(SIGINT, handler); // Too simple! See note below
 
-    <span class="kt">pthread_t</span> <span class="n">tid</span><span class="p">;</span>
-    <span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tid</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">singsong</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-    <span class="n">pthread_exit</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span> <span class="cm">/* Process will exit when there are no more threads */</span>
-<span class="p">}</span>
-</pre></div>
+    pthread_t tid;
+    pthread_create(&amp;tid, NULL, singsong, NULL);
+    pthread_exit(NULL); /* Process will exit when there are no more threads */
+}</code></pre>
 
 
 <p>Note robust programs do not use <code>signal()</code> in a multi-threaded program ("The effects of signal() in a multithreaded process are unspecified." - the signal man page); a more correct program will need to use <code>sigaction</code>.</p>

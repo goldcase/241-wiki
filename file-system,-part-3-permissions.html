@@ -76,24 +76,21 @@
 <h2>How can I have the same file appear in two different places in my file system?</h2>
 <p>First remember that a file name != the file. Think of the inode as 'the file' and a directory as just a list of names with each name mapped to an inode number. Some of those inodes may be regular file inodes, others may be directory inodes.</p>
 <p>If we already have a file on a file system we can create another link to the same inode using the 'ln' command</p>
-<div class="highlight"><pre>$ ln file1.txt blip.txt
-</pre></div>
+<pre class="highlight"><code>$ ln file1.txt blip.txt</code></pre>
 
 
 <p>However blip.txt <em>is</em> the same file; if I edit blip I'm editing the same file as 'file1.txt!'<br />
 We can prove this by showing that both file names refer to the same inode:</p>
-<div class="highlight"><pre>$ ls -i file1.txt blip.txt
+<pre class="highlight"><code>$ ls -i file1.txt blip.txt
 134235 file1.txt
-134235 blip.txt
-</pre></div>
+134235 blip.txt</code></pre>
 
 
 <p>These kinds of links (aka directory entries) are called 'hard links'</p>
 <p>The equivalent C call is <code>link</code></p>
-<div class="highlight"><pre><span class="n">link</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">path1</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">path2</span><span class="p">);</span>
+<pre class="highlight"><code class="language-C">link(const char *path1, const char *path2);
 
-<span class="n">link</span><span class="p">(</span><span class="s">&quot;file1.txt&quot;</span><span class="p">,</span> <span class="s">&quot;blip.txt&quot;</span><span class="p">);</span>
-</pre></div>
+link(&quot;file1.txt&quot;, &quot;blip.txt&quot;);</code></pre>
 
 
 <p>For simplicity the above examples made hard links inside the same directory however hard links can be created anywhere inside the same filesystem.</p>
@@ -110,12 +107,11 @@ The integrity of the file system assumes the directory structure (excluding soft
 <h2>How do I change the permissions on a file?</h2>
 <p>Use <code>chmod</code>  (short for "change the file mode bits")</p>
 <p>There is a system call, <code>int chmod(const char *path, mode_t mode);</code> but we will concentrate on the shell command. There's two common ways to use <code>chmod</code> ; with an octal value or with a symbolic string:</p>
-<div class="highlight"><pre>$ chmod 644 file1
+<pre class="highlight"><code>$ chmod 644 file1
 $ chmod 755 file2
 $ chmod 700 file3
 $ chmod ugo-w file4
-$ chmod o-rx file4
-</pre></div>
+$ chmod o-rx file4</code></pre>
 
 
 <p>The base-8 ('octal') digits describe the permissions for each role: The user who owns the file, the group and everyone else. The octal number is the sum of three values given to the three types of permission: read(4), write(2), execute(1)</p>
@@ -138,9 +134,8 @@ Possible values for the first character:<br />
 <h2>What is sudo?</h2>
 <p>Use <code>sudo</code> to become the admin on the machine.<br />
 e.g. Normally (unless explicitly specified in the '/etc/fstab' file, you need root access to mount a filesystem). <code>sudo</code> can be used to temporarily run a command as root (provided the user has sudo privileges)</p>
-<div class="highlight"><pre>$ sudo mount /dev/sda2 /stuff/mydisk
-$ sudo adduser fred
-</pre></div>
+<pre class="highlight"><code>$ sudo mount /dev/sda2 /stuff/mydisk
+$ sudo adduser fred</code></pre>
 
 
 <h2>How do I change ownership of a file?</h2>
@@ -153,9 +148,8 @@ $ sudo adduser fred
 <h2>Why are they useful?</h2>
 <p>The most common usecase is so that the user can have root(admin) access for the duration of the program.</p>
 <h2>What permissions does sudo run as ?</h2>
-<div class="highlight"><pre>$ ls -l /usr/bin/sudo
--r-s--x--x  1 root  wheel  327920 Oct 24 09:04 /usr/bin/sudo
-</pre></div>
+<pre class="highlight"><code>$ ls -l /usr/bin/sudo
+-r-s--x--x  1 root  wheel  327920 Oct 24 09:04 /usr/bin/sudo</code></pre>
 
 
 <p>The 's' bit means execute and set-uid; the effective userid of the process will be different from the parent process. In this example it will be root</p>

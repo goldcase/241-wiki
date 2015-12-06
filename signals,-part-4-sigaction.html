@@ -69,82 +69,76 @@
 <h2>How and why do I use <code>sigaction</code> ?</h2>
 <p>To change the "signal disposition" of a process - i.e. what happens when a signal is delivered to your process - use <code>sigaction</code></p>
 <p>You can use system call <code>sigaction</code> to set the current handler for a signal or read the current signal handler for a particular signal.</p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="nf">sigaction</span><span class="p">(</span><span class="kt">int</span> <span class="n">signum</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">sigaction</span> <span class="o">*</span><span class="n">act</span><span class="p">,</span> <span class="k">struct</span> <span class="n">sigaction</span> <span class="o">*</span><span class="n">oldact</span><span class="p">);</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);</code></pre>
 
 
 <p>The sigaction struct includes two callback functions (we will only look at the 'handler' version), a signal mask and a flags field -</p>
-<div class="highlight"><pre><span class="k">struct</span> <span class="n">sigaction</span> <span class="p">{</span>
-               <span class="kt">void</span>     <span class="p">(</span><span class="o">*</span><span class="n">sa_handler</span><span class="p">)(</span><span class="kt">int</span><span class="p">);</span>
-               <span class="kt">void</span>     <span class="p">(</span><span class="o">*</span><span class="n">sa_sigaction</span><span class="p">)(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">siginfo_t</span> <span class="o">*</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
-               <span class="kt">sigset_t</span>   <span class="n">sa_mask</span><span class="p">;</span>
-               <span class="kt">int</span>        <span class="n">sa_flags</span><span class="p">;</span>
-<span class="p">};</span> 
-</pre></div>
+<pre class="highlight"><code class="language-C">struct sigaction {
+               void     (*sa_handler)(int);
+               void     (*sa_sigaction)(int, siginfo_t *, void *);
+               sigset_t   sa_mask;
+               int        sa_flags;
+}; </code></pre>
 
 
 <h2>How do I convert a <code>signal</code> call into the equivalent <code>sigaction</code> call?</h2>
 <p>Suppose you installed a signal handler for the alarm signal,</p>
-<div class="highlight"><pre><span class="n">signal</span><span class="p">(</span><span class="n">SIGALRM</span><span class="p">,</span> <span class="n">myhandler</span><span class="p">);</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">signal(SIGALRM, myhandler);</code></pre>
 
 
 <p>The equivalent <code>sigaction</code> code is:</p>
-<div class="highlight"><pre><span class="k">struct</span> <span class="n">sigaction</span> <span class="n">sa</span><span class="p">;</span> 
-<span class="n">sa</span><span class="p">.</span><span class="n">sa_handler</span> <span class="o">=</span> <span class="n">myhandler</span><span class="p">;</span>
-<span class="n">sigemptyset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sa</span><span class="p">.</span><span class="n">sa_mask</span><span class="p">);</span>
-<span class="n">sa</span><span class="p">.</span><span class="n">sa_flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> 
-<span class="n">sigaction</span><span class="p">(</span><span class="n">SIGINT</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sa</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">)</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">struct sigaction sa; 
+sa.sa_handler = myhandler;
+sigemptyset(&amp;sa.sa_mask);
+sa.sa_flags = 0; 
+sigaction(SIGINT, &amp;sa, NULL)</code></pre>
 
 
 <p>However, we typically may also set the mask and the flags field. The mask is a temporary signal mask used during the signal handler execution. The SA_RESTART flag will automatically restart some (but not all) system calls that otherwise would have returned early (with EINTR error). The latter means we can simplify the rest of code somewhat because a restart loop may no longer be required.</p>
-<div class="highlight"><pre><span class="n">sigfillset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sa</span><span class="p">.</span><span class="n">sa_mask</span><span class="p">);</span>
-<span class="n">sa</span><span class="p">.</span><span class="n">sa_flags</span> <span class="o">=</span> <span class="n">SA_RESTART</span><span class="p">;</span> <span class="cm">/* Restart functions if  interrupted by handler */</span>     
-</pre></div>
+<pre class="highlight"><code class="language-C">sigfillset(&amp;sa.sa_mask);
+sa.sa_flags = SA_RESTART; /* Restart functions if  interrupted by handler */     </code></pre>
 
 
 <h2>How do I use sigwait?</h2>
 <p>Sigwait can be used to read one pending signal at a time. <code>sigwait</code> is used to synchronously wait for signals, rather than handle them in a callback. A typical use of sigwait in a multi-threaded program is shown below. Notice that the thread signal mask is set first (and will be inherited by new threads). This prevents signals from being <em>delivered</em> so they will remain in a pending state until sigwait is called. Also notice the same set sig_t variable is used by sigwait - except rather than setting the set of blocked signals it is being used as the set of signals that sigwait can catch and return.</p>
 <p>One advantage of writing a custom signal handling thread (such as the example below) rather than a callback function is that you can now use many more C library and system functions that otherwise could not be safely used in a signal handler because they are not async signal-safe.</p>
 <p>Based on <code>http://pubs.opengroup.org/onlinepubs/009695399/functions/pthread_sigmask.html</code></p>
-<div class="highlight"><pre><span class="k">static</span> <span class="kt">sigset_t</span>   <span class="n">signal_mask</span><span class="p">;</span>  <span class="cm">/* signals to block         */</span>
+<pre class="highlight"><code class="language-C">static sigset_t   signal_mask;  /* signals to block         */
 
-<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
-<span class="p">{</span>
-    <span class="kt">pthread_t</span> <span class="n">sig_thr_id</span><span class="p">;</span>      <span class="cm">/* signal handler thread ID */</span>
-    <span class="n">sigemptyset</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">signal_mask</span><span class="p">);</span>
-    <span class="n">sigaddset</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">signal_mask</span><span class="p">,</span> <span class="n">SIGINT</span><span class="p">);</span>
-    <span class="n">sigaddset</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">signal_mask</span><span class="p">,</span> <span class="n">SIGTERM</span><span class="p">);</span>
-    <span class="n">pthread_sigmask</span> <span class="p">(</span><span class="n">SIG_BLOCK</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">signal_mask</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+int main (int argc, char *argv[])
+{
+    pthread_t sig_thr_id;      /* signal handler thread ID */
+    sigemptyset (&amp;signal_mask);
+    sigaddset (&amp;signal_mask, SIGINT);
+    sigaddset (&amp;signal_mask, SIGTERM);
+    pthread_sigmask (SIG_BLOCK, &amp;signal_mask, NULL);
 
-    <span class="cm">/* New threads will inherit this thread&#39;s mask */</span>
-    <span class="n">pthread_create</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">sig_thr_id</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">signal_thread</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    /* New threads will inherit this thread's mask */
+    pthread_create (&amp;sig_thr_id, NULL, signal_thread, NULL);
 
-    <span class="cm">/* APPLICATION CODE */</span>
-    <span class="p">...</span>
-<span class="p">}</span>
+    /* APPLICATION CODE */
+    ...
+}
 
-<span class="kt">void</span> <span class="o">*</span><span class="nf">signal_thread</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">int</span>       <span class="n">sig_caught</span><span class="p">;</span>    <span class="cm">/* signal caught       */</span>
+void *signal_thread (void *arg)
+{
+    int       sig_caught;    /* signal caught       */
 
-    <span class="cm">/* Use same mask as the set of signals that we&#39;d like to know about! */</span>
-    <span class="n">sigwait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">signal_mask</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sig_caught</span><span class="p">);</span>
-    <span class="k">switch</span> <span class="p">(</span><span class="n">sig_caught</span><span class="p">)</span>
-    <span class="p">{</span>
-    <span class="k">case</span> <span class="nl">SIGINT</span><span class="p">:</span>     <span class="cm">/* process SIGINT  */</span>
-        <span class="p">...</span>
-        <span class="k">break</span><span class="p">;</span>
-    <span class="k">case</span> <span class="nl">SIGTERM</span><span class="p">:</span>    <span class="cm">/* process SIGTERM */</span>
-        <span class="p">...</span>
-        <span class="k">break</span><span class="p">;</span>
-    <span class="k">default</span><span class="o">:</span>         <span class="cm">/* should normally not happen */</span>
-        <span class="n">fprintf</span> <span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">Unexpected signal %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">sig_caught</span><span class="p">);</span>
-        <span class="k">break</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</pre></div>          </div>
+    /* Use same mask as the set of signals that we'd like to know about! */
+    sigwait(&amp;signal_mask, &amp;sig_caught);
+    switch (sig_caught)
+    {
+    case SIGINT:     /* process SIGINT  */
+        ...
+        break;
+    case SIGTERM:    /* process SIGTERM */
+        ...
+        break;
+    default:         /* should normally not happen */
+        fprintf (stderr, &quot;\nUnexpected signal %d\n&quot;, sig_caught);
+        break;
+    }
+}</code></pre>          </div>
         </div>
       </main>
     </div>

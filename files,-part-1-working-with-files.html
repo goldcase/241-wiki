@@ -70,16 +70,14 @@
 <h1>How do I tell how large a file is?</h1>
 <p>For files less than the size of a long using fseek and ftell is a simple way to accomplish this:</p>
 <p>Move to the end of the file and find out the current position.</p>
-<div class="highlight"><pre><span class="n">fseek</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">SEEK_END</span><span class="p">);</span>
-<span class="kt">long</span> <span class="n">pos</span> <span class="o">=</span> <span class="n">ftell</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">fseek(f, 0, SEEK_END);
+long pos = ftell(f);</code></pre>
 
 
 <p>This tells us the current position in the file in bytes - i.e. the length of the file!</p>
 <p><code>fseek</code> can also be used to set the absolute position.</p>
-<div class="highlight"><pre><span class="n">fseek</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">SEEK_SET</span><span class="p">);</span> <span class="c1">// Move to the start of the file </span>
-<span class="n">fseek</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">posn</span><span class="p">,</span> <span class="n">SEEK_SET</span><span class="p">);</span>  <span class="c1">// Move to &#39;posn&#39; in the file.</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">fseek(f, 0, SEEK_SET); // Move to the start of the file 
+fseek(f, posn, SEEK_SET);  // Move to 'posn' in the file.</code></pre>
 
 
 <p>All future reads and writes in the parent or child processes will honor this position.<br />

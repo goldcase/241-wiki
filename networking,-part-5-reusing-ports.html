@@ -69,11 +69,10 @@
 <h2>When I re-run my server code it doesn't work! Why?</h2>
 <p>By default, after a socket is closed the port enters a time-out state during which time it cannot be re-used ('bound to a new socket').</p>
 <p>This behavior can be disabled by setting the socket option REUSEPORT before bind-ing to a port:</p>
-<div class="highlight"><pre>    <span class="kt">int</span> <span class="n">optval</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="n">setsockopt</span><span class="p">(</span><span class="n">sock_fd</span><span class="p">,</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_REUSEPORT</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">optval</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">optval</span><span class="p">));</span>
+<pre class="highlight"><code class="language-C">    int optval = 1;
+    setsockopt(sock_fd, SOL_SOCKET, SO_REUSEPORT, &amp;optval, sizeof(optval));
 
-    <span class="n">bind</span><span class="p">(</span><span class="n">sock_fd</span><span class="p">,</span> <span class="p">...);</span>
-</pre></div>
+    bind(sock_fd, ...);</code></pre>
 
 
 <h2>Can a TCP client bind to a particular port?</h2>
@@ -81,63 +80,58 @@
 <p>To explicitly bind to an ethernet interface and port, call <code>bind</code> before <code>connect</code></p>
 <h2>Who connected to my server?</h2>
 <p>The <code>accept</code> system call can optionally provide information about the remote client, by passing in a sockaddr struct. Different protocols have differently variants of the  <code>struct sockaddr</code>, which are different sizes. The simplest struct to use is the <code>sockaddr_storage</code> which is sufficiently large to represent all possible types of sockaddr. Notice that C does not have any model of inheritance. Therefore we need to explicitly cast our struct to the 'base type' struct sockaddr.</p>
-<div class="highlight"><pre>    <span class="k">struct</span> <span class="n">sockaddr_storage</span> <span class="n">clientaddr</span><span class="p">;</span>
-    <span class="kt">socklen_t</span> <span class="n">clientaddrsize</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">clientaddr</span><span class="p">);</span>
-    <span class="kt">int</span> <span class="n">client_id</span> <span class="o">=</span> <span class="n">accept</span><span class="p">(</span><span class="n">passive_socket</span><span class="p">,</span>
-            <span class="p">(</span><span class="k">struct</span> <span class="n">sockaddr</span> <span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">clientaddr</span><span class="p">,</span>
-             <span class="o">&amp;</span><span class="n">clientaddrsize</span><span class="p">);</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">    struct sockaddr_storage clientaddr;
+    socklen_t clientaddrsize = sizeof(clientaddr);
+    int client_id = accept(passive_socket,
+            (struct sockaddr *) &amp;clientaddr,
+             &amp;clientaddrsize);</code></pre>
 
 
 <p>We've already seen <code>getaddrinfo</code> that can build a linked list of addrinfo entries (and each one of these can include socket configuration data). What if we wanted to turn socket data into IP and port addresses? Enter <code>getnameinfo</code> that can be used to convert a local or remote socket information into a domain name or numeric IP. Similarly the port number can be represented as a service name (e.g. "http" for port 80). In the example below we request numeric versions for the client IP address and client port number.</p>
-<div class="highlight"><pre>    <span class="kt">socklen_t</span> <span class="n">clientaddrsize</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">clientaddr</span><span class="p">);</span>
-    <span class="kt">int</span> <span class="n">client_id</span> <span class="o">=</span> <span class="n">accept</span><span class="p">(</span><span class="n">sock_id</span><span class="p">,</span> <span class="p">(</span><span class="k">struct</span> <span class="n">sockaddr</span> <span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">clientaddr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">clientaddrsize</span><span class="p">);</span>
-    <span class="kt">char</span> <span class="n">host</span><span class="p">[</span><span class="mi">256</span><span class="p">],</span> <span class="n">port</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
-    <span class="n">getnameinfo</span><span class="p">((</span><span class="k">struct</span> <span class="n">sockaddr</span> <span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">clientaddr</span><span class="p">,</span>
-          <span class="n">clientaddrsize</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">host</span><span class="p">),</span> <span class="n">port</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">port</span><span class="p">),</span>
-          <span class="n">NI_NUMERICHOST</span> <span class="o">|</span> <span class="n">NI_NUMERICSERV</span><span class="p">);</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">    socklen_t clientaddrsize = sizeof(clientaddr);
+    int client_id = accept(sock_id, (struct sockaddr *) &amp;clientaddr, &amp;clientaddrsize);
+    char host[256], port[256];
+    getnameinfo((struct sockaddr *) &amp;clientaddr,
+          clientaddrsize, host, sizeof(host), port, sizeof(port),
+          NI_NUMERICHOST | NI_NUMERICSERV);</code></pre>
 
 
 <p>Todo: Discuss NI_MAXHOST and NI_MAXSERV, and NI_NUMERICHOST </p>
 <h2>getnameinfo Example: What's my IP address?</h2>
 <p>To obtain a linked list of IP addresses of the current machine use <code>getifaddrs</code> which will return a linked list of IPv4 and IPv6 IP addresses (and potentially other interfaces too). We can examine each entry and use <code>getnameinfo</code> to print the host's IP address.<br />
 The  ifaddrs struct includes the family but does not include the sizeof the struct. Therefore we need to manually determine the struct sized based on the family (IPv4 v IPv6)</p>
-<div class="highlight"><pre> <span class="p">(</span><span class="n">family</span> <span class="o">==</span> <span class="n">AF_INET</span><span class="p">)</span> <span class="o">?</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">sockaddr_in</span><span class="p">)</span> <span class="o">:</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">sockaddr_in6</span><span class="p">)</span>
-</pre></div>
+<pre class="highlight"><code class="language-C"> (family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6)</code></pre>
 
 
 <p>The complete code is shown below.</p>
-<div class="highlight"><pre>    <span class="kt">int</span> <span class="n">required_family</span> <span class="o">=</span> <span class="n">AF_INET</span><span class="p">;</span> <span class="c1">// Change to AF_INET6 for IPv6</span>
-    <span class="k">struct</span> <span class="n">ifaddrs</span> <span class="o">*</span><span class="n">myaddrs</span><span class="p">,</span> <span class="o">*</span><span class="n">ifa</span><span class="p">;</span>
-    <span class="n">getifaddrs</span><span class="p">(</span><span class="o">&amp;</span><span class="n">myaddrs</span><span class="p">);</span>
-    <span class="kt">char</span> <span class="n">host</span><span class="p">[</span><span class="mi">256</span><span class="p">],</span> <span class="n">port</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
-    <span class="k">for</span> <span class="p">(</span><span class="n">ifa</span> <span class="o">=</span> <span class="n">myaddrs</span><span class="p">;</span> <span class="n">ifa</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">;</span> <span class="n">ifa</span> <span class="o">=</span> <span class="n">ifa</span><span class="o">-&gt;</span><span class="n">ifa_next</span><span class="p">)</span> <span class="p">{</span>
-        <span class="kt">int</span> <span class="n">family</span> <span class="o">=</span> <span class="n">ifa</span><span class="o">-&gt;</span><span class="n">ifa_addr</span><span class="o">-&gt;</span><span class="n">sa_family</span><span class="p">;</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">family</span> <span class="o">==</span> <span class="n">required_family</span> <span class="o">&amp;&amp;</span> <span class="n">ifa</span><span class="o">-&gt;</span><span class="n">ifa_addr</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="n">getnameinfo</span><span class="p">(</span><span class="n">ifa</span><span class="o">-&gt;</span><span class="n">ifa_addr</span><span class="p">,</span>
-                                <span class="p">(</span><span class="n">family</span> <span class="o">==</span> <span class="n">AF_INET</span><span class="p">)</span> <span class="o">?</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">sockaddr_in</span><span class="p">)</span> <span class="o">:</span>
-                                <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">sockaddr_in6</span><span class="p">),</span>
-                                <span class="n">host</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">host</span><span class="p">),</span> <span class="n">port</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">port</span><span class="p">)</span>
-                                 <span class="p">,</span> <span class="n">NI_NUMERICHOST</span> <span class="o">|</span> <span class="n">NI_NUMERICSERV</span>  <span class="p">))</span>
-                <span class="n">puts</span><span class="p">(</span><span class="n">host</span><span class="p">);</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">    int required_family = AF_INET; // Change to AF_INET6 for IPv6
+    struct ifaddrs *myaddrs, *ifa;
+    getifaddrs(&amp;myaddrs);
+    char host[256], port[256];
+    for (ifa = myaddrs; ifa != NULL; ifa = ifa-&gt;ifa_next) {
+        int family = ifa-&gt;ifa_addr-&gt;sa_family;
+        if (family == required_family &amp;&amp; ifa-&gt;ifa_addr) {
+            if (0 == getnameinfo(ifa-&gt;ifa_addr,
+                                (family == AF_INET) ? sizeof(struct sockaddr_in) :
+                                sizeof(struct sockaddr_in6),
+                                host, sizeof(host), port, sizeof(port)
+                                 , NI_NUMERICHOST | NI_NUMERICSERV  ))
+                puts(host);
+            }
+        }</code></pre>
 
 
 <h2>What's my machine's IP address (shell version)</h2>
 <p>Answer: use <code>ifconfig</code> (or Windows's ipconfig)<br />
 However this command generates a lot of output for each interface, so we can filter the output using grep</p>
-<div class="highlight"><pre>ifconfig | grep inet
+<pre class="highlight"><code>ifconfig | grep inet
 
 Example output:
     inet6 fe80::1%lo0 prefixlen 64 scopeid 0x1 
     inet 127.0.0.1 netmask 0xff000000 
     inet6 ::1 prefixlen 128 
     inet6 fe80::7256:81ff:fe9a:9141%en1 prefixlen 64 scopeid 0x5 
-    inet 192.168.1.100 netmask 0xffffff00 broadcast 192.168.1.255
-</pre></div>          </div>
+    inet 192.168.1.100 netmask 0xffffff00 broadcast 192.168.1.255</code></pre>          </div>
         </div>
       </main>
     </div>

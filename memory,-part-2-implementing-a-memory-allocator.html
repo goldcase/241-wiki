@@ -82,10 +82,9 @@ In the implementation, remember that pointer arithmetic depends on type. For exa
 <p>When a free block is found it may be larger than the space we need. If so, we will create two entries in our implicit list. The first entry is the allocated block, the second entry is the remaining space.</p>
 <p>There are two simple ways to note if a block is in use or available. The first is to store it as a byte in the header information along with the size and the second to encode it as the lowest bit in the size!<br />
 Thus block size information would be limited to only even values:</p>
-<div class="highlight"><pre>// Assumes p is a reasonable pointer type, e.g. &#39;size_t *&#39;.
+<pre class="highlight"><code>// Assumes p is a reasonable pointer type, e.g. 'size_t *'.
 isallocated = (*p) &amp; 1;
-realsize = (*p) &amp; ~1;  // mask out the lowest bit
-</pre></div>
+realsize = (*p) &amp; ~1;  // mask out the lowest bit</code></pre>
 
 
 <h2>Alignment and rounding up considerations</h2>
@@ -94,16 +93,14 @@ realsize = (*p) &amp; ~1;  // mask out the lowest bit
 <p>From glibc documentation, the glibc <code>malloc</code> uses the following heuristic:<br />
 "    The block that malloc gives you is guaranteed to be aligned so that it can hold any type of data. On GNU systems, the address is always a multiple of eight on most systems, and a multiple of 16 on 64-bit systems."</p>
 <p>For example, if you need to calculate how many 16 byte units are required, don't forget to round up -</p>
-<div class="highlight"><pre>int s = (requested_bytes + tag_overhead_bytes + 15) / 16
-</pre></div>
+<pre class="highlight"><code>int s = (requested_bytes + tag_overhead_bytes + 15) / 16</code></pre>
 
 
 <p>The additional constant ensures incomplete units are rounded up. Note, real code is more likely to symbol sizes e.g. <code>sizeof(x) - 1</code>, rather than coding numerical constant 15.</p>
 <h2>Implementing free</h2>
 <p>When <code>free</code> is called we need to re-apply the offset to get back to the 'real' start of the block (remember we didn't give the user a pointer to the actual start of the block?), i.e. to where we stored the size information.</p>
 <p>A naive implementation would simply mark the block as unused. If we are storing the block allocation status in the lowest size bit, then we just need to clear the bit:</p>
-<div class="highlight"><pre><span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">p</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="mi">1</span><span class="p">;</span> <span class="c1">// Clear lowest bit </span>
-</pre></div>
+<pre class="highlight"><code class="language-C">*p = (*p) &amp; ~1; // Clear lowest bit </code></pre>
 
 
 <p>However, we have a bit more work to do: If the current block and the next block (if it exists) are both free we need to coalesce these blocks into a single block.<br />

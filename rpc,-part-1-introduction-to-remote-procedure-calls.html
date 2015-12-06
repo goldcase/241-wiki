@@ -72,28 +72,27 @@
 <p>The remote code will execute under a different user and with different privileges from the caller. In practice the remote call may execute with more or fewer privileges than the caller. This in principle can be used to improve the security of a system (by ensuring components operate with least privilege). Unfortunately, security concerns need to be carefully assessed to ensure that RPC mechanisms cannot be subverted to perform unwanted actions. For example, an RPC implementation may implicitly trust any connected client to perform any action, rather than a subset of actions on a subset of the data.</p>
 <h2>What is stub code? What is marshalling?</h2>
 <p>The stub code is the necessary code to hide the complexity of performing a remote procedure call. One of the roles of the stub code is to <em>marshall</em> the necessary data into a format that can be sent as a byte stream to a remote server.</p>
-<div class="highlight"><pre><span class="c1">// On the outside &#39;getHiscore&#39; looks like a normal function call</span>
-<span class="c1">// On the inside the stub code performs all of the work to send and receive the data to and from the remote machine.</span>
+<pre class="highlight"><code class="language-C">// On the outside 'getHiscore' looks like a normal function call
+// On the inside the stub code performs all of the work to send and receive the data to and from the remote machine.
 
-<span class="kt">int</span> <span class="nf">getHiscore</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="n">game</span><span class="p">)</span> <span class="p">{</span>
-  <span class="c1">// Marshall the request into a sequence of bytes:</span>
-  <span class="kt">char</span><span class="o">*</span> <span class="n">buffer</span><span class="p">;</span>
-  <span class="n">asprintf</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buffer</span><span class="p">,</span><span class="s">&quot;getHiscore(%s)!&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+int getHiscore(char* game) {
+  // Marshall the request into a sequence of bytes:
+  char* buffer;
+  asprintf(&amp;buffer,&quot;getHiscore(%s)!&quot;, name);
 
-  <span class="c1">// Send down the wire (we do not send the zero byte; the &#39;!&#39; signifies the end of the message)</span>
-  <span class="n">write</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span> <span class="p">);</span>
+  // Send down the wire (we do not send the zero byte; the '!' signifies the end of the message)
+  write(fd, buffer, strlen(buffer) );
 
-  <span class="c1">// Wait for the server to send a response</span>
-  <span class="kt">ssize_t</span> <span class="n">bytesread</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span>
+  // Wait for the server to send a response
+  ssize_t bytesread = read(fd, buffer, sizeof(buffer));
 
-  <span class="c1">// Example: unmarshal the bytes received back from text into an int</span>
-  <span class="n">buffer</span><span class="p">[</span><span class="n">bytesread</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// Turn the result into a C string</span>
+  // Example: unmarshal the bytes received back from text into an int
+  buffer[bytesread] = 0; // Turn the result into a C string
 
-  <span class="kt">int</span> <span class="n">score</span><span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
-  <span class="n">free</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
-  <span class="k">return</span> <span class="n">score</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+  int score= atoi(buffer);
+  free(buffer);
+  return score;
+}</code></pre>
 
 
 <h2>What is server stub code? What is unmarshalling?</h2>
@@ -116,12 +115,10 @@
 <p>A secure RPC will need to implement additional security checks (including authentication and authorization), validate data and encrypt communication between the client and host.</p>
 <h2>Transferring large amounts of structured data</h2>
 <p>Let's examine three methods of transferring data using 3 different formats - JSON, XML and Google Protocol Buffers. JSON and XML are text-based protocols. Examples of JSON and XML messages are below.</p>
-<div class="highlight"><pre><span class="nt">&lt;ticket&gt;&lt;price</span> <span class="na">currency=</span><span class="s">&#39;dollar&#39;</span><span class="nt">&gt;</span>10<span class="nt">&lt;/price&gt;&lt;vendor&gt;</span>travelocity<span class="nt">&lt;/vendor&gt;&lt;/ticket&gt;</span>
-</pre></div>
+<pre class="highlight"><code class="language-xml">&lt;ticket&gt;&lt;price currency='dollar'&gt;10&lt;/price&gt;&lt;vendor&gt;travelocity&lt;/vendor&gt;&lt;/ticket&gt;</code></pre>
 
 
-<div class="highlight"><pre><span class="p">{</span> <span class="s1">&#39;currency&#39;</span><span class="o">:</span><span class="s1">&#39;dollar&#39;</span> <span class="p">,</span> <span class="s1">&#39;vendor&#39;</span><span class="o">:</span><span class="s1">&#39;travelocity&#39;</span><span class="p">,</span> <span class="s1">&#39;price&#39;</span><span class="o">:</span><span class="s1">&#39;10&#39;</span> <span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-javascript">{ 'currency':'dollar' , 'vendor':'travelocity', 'price':'10' }</code></pre>
 
 
 <p>Google Protocol Buffers is an open-source efficient binary protocol that places a strong emphasis on high throughput with low CPU overhead and minimal memory copying. Implementations exist for multiple languages including Go, Python, C++ and C. This means client and server stub code in multiple languages can be generated from the .proto specification file to marshall data to and from a binary stream.</p>

@@ -81,57 +81,52 @@ The NDEBUG macro will disable all assertions, so don't forget to set that once y
 <p>Introduction: <a href="http://www.cs.cmu.edu/~gilpin/tutorial/">http://www.cs.cmu.edu/~gilpin/tutorial/</a></p>
 <h4>Setting breakpoints programmatically</h4>
 <p>A very useful trick when debugging complex C programs with GDB is setting breakpoints in the source code.</p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">val</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="n">val</span> <span class="o">=</span> <span class="mi">42</span><span class="p">;</span>
-    <span class="n">asm</span><span class="p">(</span><span class="s">&quot;int $3&quot;</span><span class="p">);</span> <span class="c1">// set a breakpoint here</span>
-    <span class="n">val</span> <span class="o">=</span> <span class="mi">7</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-c">int main() {
+    int val = 1;
+    val = 42;
+    asm(&quot;int $3&quot;); // set a breakpoint here
+    val = 7;
+}</code></pre>
 
 
-<div class="highlight"><pre><span class="nv">$ </span>gcc main.c -g -o main <span class="o">&amp;&amp;</span> ./main
-<span class="o">(</span>gdb<span class="o">)</span> r
-<span class="o">[</span>...<span class="o">]</span>
+<pre class="highlight"><code class="language-sh">$ gcc main.c -g -o main &amp;&amp; ./main
+(gdb) r
+[...]
 Program received signal SIGTRAP, Trace/breakpoint trap.
-main <span class="o">()</span> at main.c:6
-<span class="m">6</span>       <span class="nv">val</span> <span class="o">=</span> 7<span class="p">;</span>
-<span class="o">(</span>gdb<span class="o">)</span> p val
-<span class="nv">$1</span> <span class="o">=</span> 42
-</pre></div>
+main () at main.c:6
+6       val = 7;
+(gdb) p val
+$1 = 42</code></pre>
 
 
 <h4>Checking memory content</h4>
 <p><a href="http://www.delorie.com/gnu/docs/gdb/gdb_56.html">http://www.delorie.com/gnu/docs/gdb/gdb_56.html</a></p>
 <p>For example,</p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kt">char</span> <span class="n">bad_string</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="sc">&#39;C&#39;</span><span class="p">,</span> <span class="sc">&#39;a&#39;</span><span class="p">,</span> <span class="sc">&#39;t&#39;</span><span class="p">};</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s&quot;</span><span class="p">,</span> <span class="n">bad_string</span><span class="p">);</span>
-<span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-c">int main() {
+    char bad_string[3] = {'C', 'a', 't'};
+    printf(&quot;%s&quot;, bad_string);
+}</code></pre>
 
 
-<div class="highlight"><pre><span class="nv">$ </span>gcc main.c -g -o main <span class="o">&amp;&amp;</span> ./main
-<span class="nv">$ </span>Cat ZVQ� <span class="err">$</span>
-</pre></div>
+<pre class="highlight"><code class="language-sh">$ gcc main.c -g -o main &amp;&amp; ./main
+$ Cat ZVQ� $</code></pre>
 
 
-<div class="highlight"><pre><span class="o">(</span>gdb<span class="o">)</span> l
-<span class="m">1</span>   <span class="c">#include &lt;stdio.h&gt;</span>
-<span class="m">2</span>   int main<span class="o">()</span> <span class="o">{</span>
-<span class="m">3</span>       char bad_string<span class="o">[</span>3<span class="o">]</span> <span class="o">=</span> <span class="o">{</span><span class="s1">&#39;C&#39;</span>, <span class="s1">&#39;a&#39;</span>, <span class="s1">&#39;t&#39;</span><span class="o">}</span><span class="p">;</span>
-<span class="m">4</span>       <span class="nb">printf</span><span class="o">(</span><span class="s2">&quot;%s&quot;</span>, bad_string<span class="o">)</span><span class="p">;</span>
-<span class="m">5</span>   <span class="o">}</span>
-<span class="o">(</span>gdb<span class="o">)</span> b 4
-Breakpoint <span class="m">1</span> at 0x100000f57: file main.c, line 4.
-<span class="o">(</span>gdb<span class="o">)</span> r
-<span class="o">[</span>...<span class="o">]</span>
-Breakpoint 1, main <span class="o">()</span> at main.c:4
-<span class="m">4</span>       <span class="nb">printf</span><span class="o">(</span><span class="s2">&quot;%s&quot;</span>, bad_string<span class="o">)</span><span class="p">;</span>
-<span class="o">(</span>gdb<span class="o">)</span> x/16xb bad_string
+<pre class="highlight"><code class="language-sh">(gdb) l
+1   #include &lt;stdio.h&gt;
+2   int main() {
+3       char bad_string[3] = {'C', 'a', 't'};
+4       printf(&quot;%s&quot;, bad_string);
+5   }
+(gdb) b 4
+Breakpoint 1 at 0x100000f57: file main.c, line 4.
+(gdb) r
+[...]
+Breakpoint 1, main () at main.c:4
+4       printf(&quot;%s&quot;, bad_string);
+(gdb) x/16xb bad_string
 0x7fff5fbff9cd: 0x63    0x61    0x74    0xe0    0xf9    0xbf    0x5f    0xff
-0x7fff5fbff9d5: 0x7f    0x00    0x00    0xfd    0xb5    0x23    0x89    0xff
-</pre></div>
+0x7fff5fbff9d5: 0x7f    0x00    0x00    0xfd    0xb5    0x23    0x89    0xff</code></pre>
 
 
 <p>Here, by using the <code>x</code> command with parameters <code>16xb</code>, we can see that starting at memory address <code>0x7fff5fbff9c</code> (value of <code>bad_string</code>), printf would actually see the following sequence of bytes as a string because we provided a malformed string without a null terminator.</p>

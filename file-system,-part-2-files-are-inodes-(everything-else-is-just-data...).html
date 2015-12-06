@@ -73,117 +73,109 @@
 POSIX provides a small set of functions to read the filename and inode number for each entry (see below)</p>
 <h2>How can I find the inode number of a file?</h2>
 <p>From a shell, use <code>ls</code> with the <code>-i</code> option</p>
-<div class="highlight"><pre>$ ls -i
-12983989 dirlist.c      12984068 sandwhich.c
-</pre></div>
+<pre class="highlight"><code>$ ls -i
+12983989 dirlist.c      12984068 sandwhich.c</code></pre>
 
 
 <p>From C, call one of the stat functions (introduced below).</p>
 <h2>How do I find out meta-information about a file (or directory)?</h2>
 <p>Use the stat calls. For example, to find out when my 'notes.txt' file was last accessed -</p>
-<div class="highlight"><pre>   <span class="k">struct</span> <span class="n">stat</span> <span class="n">s</span><span class="p">;</span>
-   <span class="n">stat</span><span class="p">(</span><span class="s">&quot;notes.txt&quot;</span><span class="p">,</span> <span class="o">&amp;</span> <span class="n">s</span><span class="p">);</span>
-   <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Last accessed %s&quot;</span><span class="p">,</span> <span class="n">ctime</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">st_atime</span><span class="p">));</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">   struct stat s;
+   stat(&quot;notes.txt&quot;, &amp; s);
+   printf(&quot;Last accessed %s&quot;, ctime(s.st_atime));</code></pre>
 
 
 <p>There are actually three versions of <code>stat</code>;</p>
-<div class="highlight"><pre>       <span class="kt">int</span> <span class="nf">stat</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="k">struct</span> <span class="n">stat</span> <span class="o">*</span><span class="n">buf</span><span class="p">);</span>
-       <span class="kt">int</span> <span class="nf">fstat</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="k">struct</span> <span class="n">stat</span> <span class="o">*</span><span class="n">buf</span><span class="p">);</span>
-       <span class="kt">int</span> <span class="nf">lstat</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="k">struct</span> <span class="n">stat</span> <span class="o">*</span><span class="n">buf</span><span class="p">);</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">       int stat(const char *path, struct stat *buf);
+       int fstat(int fd, struct stat *buf);
+       int lstat(const char *path, struct stat *buf);</code></pre>
 
 
 <p>For example you can use <code>fstat</code> to find out the meta-information about a file if you already have an file descriptor associated with that file</p>
-<div class="highlight"><pre>   <span class="kt">FILE</span> <span class="o">*</span><span class="n">file</span> <span class="o">=</span> <span class="n">fopen</span><span class="p">(</span><span class="s">&quot;notes.txt&quot;</span><span class="p">,</span> <span class="s">&quot;r&quot;</span><span class="p">);</span>
-   <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">fileno</span><span class="p">(</span><span class="n">file</span><span class="p">);</span> <span class="cm">/* Just for fun - extract the file descriptor from a C FILE struct */</span>
-   <span class="k">struct</span> <span class="n">stat</span> <span class="n">s</span><span class="p">;</span>
-   <span class="n">fstat</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span> <span class="n">s</span><span class="p">);</span>
-   <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Last accessed %s&quot;</span><span class="p">,</span> <span class="n">ctime</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">st_atime</span><span class="p">));</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">   FILE *file = fopen(&quot;notes.txt&quot;, &quot;r&quot;);
+   int fd = fileno(file); /* Just for fun - extract the file descriptor from a C FILE struct */
+   struct stat s;
+   fstat(fd, &amp; s);
+   printf(&quot;Last accessed %s&quot;, ctime(s.st_atime));</code></pre>
 
 
 <p>The third call 'lstat' we will discuss when we introduce symbolic links.</p>
 <p>In addition to access,creation, and modified times, the stat structure includes the inode number, length of the file and owner information.</p>
-<div class="highlight"><pre><span class="k">struct</span> <span class="n">stat</span> <span class="p">{</span>
-               <span class="kt">dev_t</span>     <span class="n">st_dev</span><span class="p">;</span>     <span class="cm">/* ID of device containing file */</span>
-               <span class="kt">ino_t</span>     <span class="n">st_ino</span><span class="p">;</span>     <span class="cm">/* inode number */</span>
-               <span class="kt">mode_t</span>    <span class="n">st_mode</span><span class="p">;</span>    <span class="cm">/* protection */</span>
-               <span class="kt">nlink_t</span>   <span class="n">st_nlink</span><span class="p">;</span>   <span class="cm">/* number of hard links */</span>
-               <span class="kt">uid_t</span>     <span class="n">st_uid</span><span class="p">;</span>     <span class="cm">/* user ID of owner */</span>
-               <span class="kt">gid_t</span>     <span class="n">st_gid</span><span class="p">;</span>     <span class="cm">/* group ID of owner */</span>
-               <span class="kt">dev_t</span>     <span class="n">st_rdev</span><span class="p">;</span>    <span class="cm">/* device ID (if special file) */</span>
-               <span class="kt">off_t</span>     <span class="n">st_size</span><span class="p">;</span>    <span class="cm">/* total size, in bytes */</span>
-               <span class="kt">blksize_t</span> <span class="n">st_blksize</span><span class="p">;</span> <span class="cm">/* blocksize for file system I/O */</span>
-               <span class="kt">blkcnt_t</span>  <span class="n">st_blocks</span><span class="p">;</span>  <span class="cm">/* number of 512B blocks allocated */</span>
-               <span class="kt">time_t</span>    <span class="n">st_atime</span><span class="p">;</span>   <span class="cm">/* time of last access */</span>
-               <span class="kt">time_t</span>    <span class="n">st_mtime</span><span class="p">;</span>   <span class="cm">/* time of last modification */</span>
-               <span class="kt">time_t</span>    <span class="n">st_ctime</span><span class="p">;</span>   <span class="cm">/* time of last status change */</span>
-           <span class="p">};</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">struct stat {
+               dev_t     st_dev;     /* ID of device containing file */
+               ino_t     st_ino;     /* inode number */
+               mode_t    st_mode;    /* protection */
+               nlink_t   st_nlink;   /* number of hard links */
+               uid_t     st_uid;     /* user ID of owner */
+               gid_t     st_gid;     /* group ID of owner */
+               dev_t     st_rdev;    /* device ID (if special file) */
+               off_t     st_size;    /* total size, in bytes */
+               blksize_t st_blksize; /* blocksize for file system I/O */
+               blkcnt_t  st_blocks;  /* number of 512B blocks allocated */
+               time_t    st_atime;   /* time of last access */
+               time_t    st_mtime;   /* time of last modification */
+               time_t    st_ctime;   /* time of last status change */
+           };</code></pre>
 
 
 <h2>How do I list the contents of a directory ?</h2>
 <p>Let's write our own version of 'ls' to list the contents of a directory.</p>
-<div class="highlight"><pre><span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;dirent.h&gt;</span>
-<span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">argc</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Usage: %s [directory]</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">argv</span><span class="p">);</span>
-        <span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">struct</span> <span class="n">dirent</span> <span class="o">*</span><span class="n">dp</span><span class="p">;</span>
-    <span class="kt">DIR</span> <span class="o">*</span><span class="n">dirp</span> <span class="o">=</span> <span class="n">opendir</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-    <span class="k">while</span> <span class="p">((</span><span class="n">dp</span> <span class="o">=</span> <span class="n">readdir</span><span class="p">(</span><span class="n">dirp</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">puts</span><span class="p">(</span><span class="n">dp</span><span class="o">-&gt;</span><span class="n">d_name</span><span class="p">);</span>
-    <span class="p">}</span>
+<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
+#include &lt;dirent.h&gt;
+#include &lt;stdlib.h&gt;
+int main(int argc, char **argv) {
+    if(argc == 1) {
+        printf(&quot;Usage: %s [directory]\n&quot;, *argv);
+        exit(0);
+    }
+    struct dirent *dp;
+    DIR *dirp = opendir(argv[1]);
+    while ((dp = readdir(dirp)) != NULL) {
+        puts(dp-&gt;d_name);
+    }
 
-    <span class="n">closedir</span><span class="p">(</span><span class="n">dirp</span><span class="p">);</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+    closedir(dirp);
+    return 0;
+}</code></pre>
 
 
 <h2>How do I read the contents of a directory?</h2>
 <p>Ans: Use opendir readdir closedir<br />
 For example, here's a very simple implementation of 'ls' to list the contents of a directory.</p>
-<div class="highlight"><pre><span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;dirent.h&gt;</span>
-<span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">argc</span> <span class="o">==</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Usage: %s [directory]</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">argv</span><span class="p">);</span>
-        <span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="k">struct</span> <span class="n">dirent</span> <span class="o">*</span><span class="n">dp</span><span class="p">;</span>
-    <span class="kt">DIR</span> <span class="o">*</span><span class="n">dirp</span> <span class="o">=</span> <span class="n">opendir</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-    <span class="k">while</span> <span class="p">((</span><span class="n">dp</span> <span class="o">=</span> <span class="n">readdir</span><span class="p">(</span><span class="n">dirp</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s %lu</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">dp</span><span class="o">-&gt;</span> <span class="n">d_name</span><span class="p">,</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span><span class="p">)</span><span class="n">dp</span><span class="o">-&gt;</span> <span class="n">d_ino</span> <span class="p">);</span>
-    <span class="p">}</span>
+<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
+#include &lt;dirent.h&gt;
+#include &lt;stdlib.h&gt;
+int main(int argc, char **argv) {
+    if(argc ==1) {
+        printf(&quot;Usage: %s [directory]\n&quot;, *argv);
+        exit(0);
+    }
+    struct dirent *dp;
+    DIR *dirp = opendir(argv[1]);
+    while ((dp = readdir(dirp)) != NULL) {
+        printf(&quot;%s %lu\n&quot;, dp-&gt; d_name, (unsigned long)dp-&gt; d_ino );
+    }
 
-    <span class="n">closedir</span><span class="p">(</span><span class="n">dirp</span><span class="p">);</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+    closedir(dirp);
+    return 0;
+}</code></pre>
 
 
 <p>Note: after a call to fork(), either (XOR) the parent or the child can use readdir(), rewinddir() or seekdir(). If both the parent and the child use the above, behavior is undefined.</p>
 <h2>How do I check to see if a file is in the current directory?</h2>
 <p>For example, to see if a particular directory includes a file (or filename) 'name', we might write the following code. (Hint: Can you spot the bug?)</p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="nf">exists</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">directory</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">)</span>  <span class="p">{</span>
-    <span class="k">struct</span> <span class="n">dirent</span> <span class="o">*</span><span class="n">dp</span><span class="p">;</span>
-    <span class="kt">DIR</span> <span class="o">*</span><span class="n">dirp</span> <span class="o">=</span> <span class="n">opendir</span><span class="p">(</span><span class="n">directory</span><span class="p">);</span>
-    <span class="k">while</span> <span class="p">((</span><span class="n">dp</span> <span class="o">=</span> <span class="n">readdir</span><span class="p">(</span><span class="n">dirp</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">puts</span><span class="p">(</span><span class="n">dp</span><span class="o">-&gt;</span><span class="n">d_name</span><span class="p">);</span>
-        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">dp</span><span class="o">-&gt;</span><span class="n">d_name</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span> <span class="cm">/* Found */</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="n">closedir</span><span class="p">(</span><span class="n">dirp</span><span class="p">);</span>
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="cm">/* Not Found */</span>
-<span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">int exists(char *directory, char *name)  {
+    struct dirent *dp;
+    DIR *dirp = opendir(directory);
+    while ((dp = readdir(dirp)) != NULL) {
+        puts(dp-&gt;d_name);
+        if (!strcmp(dp-&gt;d_name, name)) {
+        return 1; /* Found */
+        }
+    }
+    closedir(dirp);
+    return 0; /* Not Found */
+}</code></pre>
 
 
 <p>The above code has a subtle bug: It leaks resources! If a matching filename is found then 'closedir' is never called as part of the early return. Any file descriptors opened, and any memory allocated, by opendir are never released. This means eventually the process will run out of resources and an <code>open</code> or <code>opendir</code> call will fail.</p>
@@ -192,20 +184,19 @@ For example, here's a very simple implementation of 'ls' to list the contents of
 <p>Note If C supported exception handling this discussion would be unnecessary.<br />
 Imagine your function required several temporary resources that need to be freed before returning.<br />
 How can we write readable code that correctly frees resources under all code paths? Some system programs use <code>goto</code> to jump forward into the clean up code, using the following pattern:</p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="nf">f</span><span class="p">()</span> <span class="p">{</span>
-   <span class="n">Acquire</span> <span class="n">resource</span> <span class="n">r1</span>
-   <span class="k">if</span><span class="p">(...)</span> <span class="k">goto</span> <span class="n">clean_up_r1</span>
-   <span class="n">Acquire</span> <span class="n">resource</span> <span class="n">r2</span>
-   <span class="k">if</span><span class="p">(...)</span> <span class="k">goto</span> <span class="n">clean_up_r2</span>
+<pre class="highlight"><code class="language-C">int f() {
+   Acquire resource r1
+   if(...) goto clean_up_r1
+   Acquire resource r2
+   if(...) goto clean_up_r2
 
-   <span class="n">perform</span> <span class="n">work</span>
-<span class="nl">clean_up_r2</span><span class="p">:</span>
-   <span class="n">clean</span> <span class="n">up</span> <span class="n">r2</span>
-<span class="nl">clean_up_r1</span><span class="p">:</span>
-   <span class="n">clean</span> <span class="n">up</span> <span class="n">r1</span>
-   <span class="k">return</span> <span class="n">result</span>
-<span class="p">}</span>
-</pre></div>
+   perform work
+clean_up_r2:
+   clean up r2
+clean_up_r1:
+   clean up r1
+   return result
+}</code></pre>
 
 
 <p>Whether this is a good thing or not has led to long rigorous debates that have generally helped system programmers stay warm during the cold winter months. Are there alternatives? Yes! For example using conditional logic, breaking out of do-while loops and writing secondary functions that perform the innermost work. However all choices are problematic and cumbersome as we are attempting to shoe-horn in exception handling in a language that has no inbuilt support for it.</p>
@@ -218,15 +209,14 @@ The <code>readdir</code> function returns "." (current directory) and ".." (pare
 <h2>How I do determine if a directory entry is a directory?</h2>
 <p>Ans: Use <code>S_ISDIR</code> to check the mode bits stored in the stat structure</p>
 <p>And to check if a file is regular file use <code>S_ISREG</code>,</p>
-<div class="highlight"><pre>   <span class="k">struct</span> <span class="n">stat</span> <span class="n">s</span><span class="p">;</span>
-   <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="n">stat</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">s</span><span class="p">))</span> <span class="p">{</span>
-      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s &quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
-      <span class="k">if</span> <span class="p">(</span><span class="n">S_ISDIR</span><span class="p">(</span> <span class="n">s</span><span class="p">.</span><span class="n">st_mode</span><span class="p">))</span> <span class="n">puts</span><span class="p">(</span><span class="s">&quot;is a directory&quot;</span><span class="p">);</span>
-      <span class="k">if</span> <span class="p">(</span><span class="n">S_ISREG</span><span class="p">(</span> <span class="n">s</span><span class="p">.</span><span class="n">st_mode</span><span class="p">))</span> <span class="n">puts</span><span class="p">(</span><span class="s">&quot;is a regular file&quot;</span><span class="p">);</span>
-   <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-      <span class="n">perror</span><span class="p">(</span><span class="s">&quot;stat failed - are you sure I can read this file&#39;s meta data?&quot;</span><span class="p">);</span>
-   <span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">   struct stat s;
+   if (0 == stat(name, &amp;s)) {
+      printf(&quot;%s &quot;, name);
+      if (S_ISDIR( s.st_mode)) puts(&quot;is a directory&quot;);
+      if (S_ISREG( s.st_mode)) puts(&quot;is a regular file&quot;);
+   } else {
+      perror(&quot;stat failed - are you sure I can read this file's meta data?&quot;);
+   }</code></pre>
 
 
 <p><a href="https://github.com/angrave/SystemProgramming/wiki/File-System,-Part-3:-Permissions">Go to File System, Part 3</a></p>          </div>

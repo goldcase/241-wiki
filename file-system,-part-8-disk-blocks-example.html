@@ -69,88 +69,82 @@
 <h2>Under construction</h2>
 <h2>Please can you explain a simple model of how the file's content is stored in a simple i-node based filesystem?</h2>
 <p>Sure!To answer this question we'll build a virtual disk and then write some C code to access its contents. Our filesystem will divide the bytes available into space for inodes and a much larger space for disk blocks. Each disk block will be 4096 bytes- </p>
-<div class="highlight"><pre><span class="c1">// Disk size:</span>
-<span class="cp">#define MAX_INODE (1024)</span>
-<span class="cp">#define MAX_BLOCK (1024*1024)</span>
+<pre class="highlight"><code class="language-C">// Disk size:
+#define MAX_INODE (1024)
+#define MAX_BLOCK (1024*1024)
 
-<span class="c1">// Each block is 4096 bytes:</span>
-<span class="k">typedef</span> <span class="kt">char</span><span class="p">[</span><span class="mi">4096</span><span class="p">]</span> <span class="kt">block_t</span><span class="p">;</span>
+// Each block is 4096 bytes:
+typedef char[4096] block_t;
 
-<span class="c1">// A disk is an array of inodes and an array of disk blocks:</span>
-<span class="k">struct</span> <span class="n">inode</span><span class="p">[</span><span class="n">MAX_INODE</span><span class="p">]</span> <span class="n">inodes</span><span class="p">;</span>
-<span class="n">block</span><span class="p">[</span><span class="n">MAX_BLOCK</span><span class="p">]</span> <span class="n">blocks</span><span class="p">;</span>
-</pre></div>
+// A disk is an array of inodes and an array of disk blocks:
+struct inode[MAX_INODE] inodes;
+block[MAX_BLOCK] blocks;</code></pre>
 
 
 <p>Note for clarity we will not use 'unsigned' in this code example. Our fixed-sized inodes will contain the file's size in bytes, permission,user,group information, time meta-data. What is most relevant to the problem-at hand is that it will also include ten pointers to disk blocks that we will use to refer to the actual file's contents!</p>
-<div class="highlight"><pre><span class="k">struct</span> <span class="n">inode</span> <span class="p">{</span>
- <span class="kt">int</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span> <span class="n">directblocks</span><span class="p">;</span> <span class="c1">// indices for the block array i.e. where to the find the file&#39;s content</span>
- <span class="kt">long</span> <span class="n">size</span><span class="p">;</span>
- <span class="c1">// ... standard inode meta-data e.g.</span>
- <span class="kt">int</span> <span class="n">mode</span><span class="p">,</span> <span class="n">userid</span><span class="p">,</span><span class="n">groupid</span><span class="p">;</span>
- <span class="kt">time_t</span> <span class="n">ctime</span><span class="p">,</span><span class="n">atime</span><span class="p">,</span><span class="n">mtime</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">struct inode {
+ int[10] directblocks; // indices for the block array i.e. where to the find the file's content
+ long size;
+ // ... standard inode meta-data e.g.
+ int mode, userid,groupid;
+ time_t ctime,atime,mtime;
+}</code></pre>
 
 
 <p>Now we can work out how to read a byte at offset <code>position</code> of our file:</p>
-<div class="highlight"><pre><span class="kt">char</span> <span class="nf">readbyte</span><span class="p">(</span><span class="n">inode</span><span class="o">*</span><span class="n">inode</span><span class="p">,</span><span class="kt">long</span> <span class="n">position</span><span class="p">)</span> <span class="p">{</span>
-  <span class="k">if</span><span class="p">(</span><span class="n">position</span> <span class="o">&lt;</span><span class="mi">0</span> <span class="o">||</span> <span class="n">position</span> <span class="o">&gt;=</span> <span class="n">inode</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="c1">// invalid offset</span>
+<pre class="highlight"><code class="language-C">char readbyte(inode*inode,long position) {
+  if(position &lt;0 || position &gt;= inode-&gt;size) return -1; // invalid offset
 
-  <span class="kt">int</span>  <span class="n">block_count</span> <span class="o">=</span> <span class="n">position</span> <span class="o">/</span> <span class="mi">4096</span><span class="p">,</span><span class="n">offset</span> <span class="o">=</span> <span class="n">position</span> <span class="o">%</span> <span class="mi">4096</span><span class="p">;</span>
+  int  block_count = position / 4096,offset = position % 4096;
 
-  <span class="c1">// block count better be 0..9 !</span>
-  <span class="kt">int</span> <span class="n">physical_idx</span> <span class="o">=</span> <span class="n">lookup_physical_block_index</span><span class="p">(</span><span class="n">inode</span><span class="p">,</span> <span class="n">block_count</span> <span class="p">);</span>
+  // block count better be 0..9 !
+  int physical_idx = lookup_physical_block_index(inode, block_count );
 
-  <span class="c1">// sanity check that the disk block index is reasonable...</span>
-  <span class="n">assert</span><span class="p">(</span><span class="n">physical_idx</span> <span class="o">&gt;=</span><span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">physical_idx</span> <span class="o">&lt;</span> <span class="n">MAX_BLOCK</span><span class="p">);</span>
+  // sanity check that the disk block index is reasonable...
+  assert(physical_idx &gt;=0 &amp;&amp; physical_idx &lt; MAX_BLOCK);
 
 
-  <span class="c1">// read the disk block from our virtual disk &#39;blocks&#39; and return the specific byte</span>
-  <span class="k">return</span> <span class="n">blocks</span><span class="p">[</span><span class="n">physical_idx</span><span class="p">][</span><span class="n">offset</span><span class="p">];</span>
-<span class="p">}</span>
-</pre></div>
+  // read the disk block from our virtual disk 'blocks' and return the specific byte
+  return blocks[physical_idx][offset];
+}</code></pre>
 
 
 <p>Our initial version of lookup_physical_block is simple - we can use our table of 10 direct blocks!</p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="nf">lookup_physical_block_index</span><span class="p">(</span><span class="n">inode</span><span class="o">*</span><span class="n">inode</span><span class="p">,</span> <span class="kt">int</span> <span class="n">block_count</span><span class="p">)</span> <span class="p">{</span>
-  <span class="n">assert</span><span class="p">(</span><span class="n">block_count</span><span class="o">&gt;=</span><span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">block_count</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">);</span>
+<pre class="highlight"><code class="language-C">int lookup_physical_block_index(inode*inode, int block_count) {
+  assert(block_count&gt;=0 &amp;&amp; block_count &lt; 10);
 
-  <span class="k">return</span> <span class="n">inode</span><span class="o">-&gt;</span><span class="n">directblocks</span><span class="p">[</span> <span class="n">block_count</span> <span class="p">];</span> <span class="c1">// returns an index value between [0,MAX_BLOCK)</span>
-<span class="p">}</span>
-</pre></div>
+  return inode-&gt;directblocks[ block_count ]; // returns an index value between [0,MAX_BLOCK)
+}</code></pre>
 
 
 <p>This simple representation is reasonable provided we can represent all possible files with just ten blocks i.e. upto 40KB. What about larger files? We need the inode struct to always be the same size so just increasing the existing direct block array to 20 would roughly double the size of our inodes. If most of our files require less than 10 blocks, then our inode storage is now wasteful. To solve this problem we will use a disk block calledn the <em>indirect block</em> to extend the array of pointers at our disposal. We will only need this for files &gt; 40KB</p>
-<div class="highlight"><pre><span class="k">struct</span> <span class="n">inode</span> <span class="p">{</span>
- <span class="kt">int</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span> <span class="n">directblocks</span><span class="p">;</span> <span class="c1">// if size&lt;4KB then only the first one is valid</span>
- <span class="kt">int</span> <span class="n">indirectblock</span><span class="p">;</span> <span class="c1">// valid value when size &gt;= 40KB</span>
- <span class="kt">int</span> <span class="n">size</span><span class="p">;</span>
- <span class="p">...</span>
-<span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">struct inode {
+ int[10] directblocks; // if size&lt;4KB then only the first one is valid
+ int indirectblock; // valid value when size &gt;= 40KB
+ int size;
+ ...
+}</code></pre>
 
 
 <p>The indirect block is just a regular disk block of 4096 bytes but we will use it to hold pointers to disk blocks. Our pointers in this case are just integers, so we need to cast the pointer to an integer pointer:</p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="nf">lookup_physical_block_index</span><span class="p">(</span><span class="n">inode</span><span class="o">*</span><span class="n">inode</span><span class="p">,</span> <span class="kt">int</span> <span class="n">block_count</span><span class="p">)</span> <span class="p">{</span>
-  <span class="n">assert</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="o">==</span><span class="mi">4</span><span class="p">);</span> <span class="c1">// Warning this code assumes an index is 4 bytes!</span>
-  <span class="n">assert</span><span class="p">(</span><span class="n">block_count</span><span class="o">&gt;=</span><span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">block_count</span> <span class="o">&lt;</span> <span class="mi">1024</span> <span class="o">+</span> <span class="mi">10</span><span class="p">);</span> <span class="c1">// 0 &lt;= block_count&lt; 1034</span>
+<pre class="highlight"><code class="language-C">int lookup_physical_block_index(inode*inode, int block_count) {
+  assert(sizeof(int)==4); // Warning this code assumes an index is 4 bytes!
+  assert(block_count&gt;=0 &amp;&amp; block_count &lt; 1024 + 10); // 0 &lt;= block_count&lt; 1034
 
-  <span class="k">if</span><span class="p">(</span> <span class="n">block_count</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">)</span>
-     <span class="k">return</span> <span class="n">inode</span><span class="o">-&gt;</span><span class="n">directblocks</span><span class="p">[</span> <span class="n">block_count</span> <span class="p">];</span>
+  if( block_count &lt; 10)
+     return inode-&gt;directblocks[ block_count ];
 
-  <span class="c1">// read the indirect block from disk:</span>
-  <span class="kt">block_t</span><span class="o">*</span> <span class="n">oneblock</span> <span class="o">=</span> <span class="o">&amp;</span> <span class="n">blocks</span><span class="p">[</span> <span class="n">inode</span><span class="o">-&gt;</span><span class="n">indirectblock</span> <span class="p">];</span>
+  // read the indirect block from disk:
+  block_t* oneblock = &amp; blocks[ inode-&gt;indirectblock ];
 
-  <span class="c1">// Treat the 4KB as an array of 1024 pointers to other disk blocks</span>
-  <span class="kt">int</span><span class="o">*</span> <span class="n">table</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span> <span class="n">oneblock</span><span class="p">;</span>
+  // Treat the 4KB as an array of 1024 pointers to other disk blocks
+  int* table = (int*) oneblock;
 
- <span class="c1">// Look up the correct entry in the table</span>
- <span class="c1">// Offset by 10 because the first 10 blocks of data are already </span>
- <span class="c1">// accounted for</span>
-  <span class="k">return</span> <span class="n">table</span><span class="p">[</span> <span class="n">block_count</span> <span class="o">-</span> <span class="mi">10</span> <span class="p">];</span>
-<span class="p">}</span>
-</pre></div>
+ // Look up the correct entry in the table
+ // Offset by 10 because the first 10 blocks of data are already 
+ // accounted for
+  return table[ block_count - 10 ];
+}</code></pre>
 
 
 <p>For a typical filesystem our index values are 32 bits i.e. 4bytes. Thus in 4096 bytes we can store 4096 / 4 = 1024 entries<br />
@@ -158,28 +152,27 @@ This means our indirect block can refer to 1024 * 4KB = 4MB of data. With the fi
 <p>For even larger files we could use two indirect blocks. However there's a better alternative, that will allow us to efficiently scale up to huge files. We will include a double-indirect pointer and if that's not enough a triple indirect pointer. The double indirect pointer means we have a table of 1024 entries to disk blocks that are used as 1024 entries. This means we can refer to 1024*1024 disk blocks of data.</p>
 <p><img alt="inode disk blocks for data" src="http://uw714doc.sco.com/en/FS_admin/graphics/s5chain.gif" /></p>
 <p>(source: <a href="http://uw714doc.sco.com/en/FS_admin/graphics/s5chain.gif">http://uw714doc.sco.com/en/FS_admin/graphics/s5chain.gif</a>)</p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="nf">lookup_physical_block_index</span><span class="p">(</span><span class="n">inode</span><span class="o">*</span><span class="n">inode</span><span class="p">,</span> <span class="kt">int</span> <span class="n">block_count</span><span class="p">)</span> <span class="p">{</span>
-  <span class="k">if</span><span class="p">(</span> <span class="n">block_count</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">)</span>
-     <span class="k">return</span> <span class="n">inode</span><span class="o">-&gt;</span><span class="n">directblocks</span><span class="p">[</span> <span class="n">block_count</span> <span class="p">];</span>
+<pre class="highlight"><code class="language-C">int lookup_physical_block_index(inode*inode, int block_count) {
+  if( block_count &lt; 10)
+     return inode-&gt;directblocks[ block_count ];
 
-  <span class="c1">// Use indirect block for the next 1024 blocks:</span>
-  <span class="c1">// Assumes 1024 ints can fit inside each block!</span>
-  <span class="k">if</span><span class="p">(</span> <span class="n">block_count</span> <span class="o">&lt;</span> <span class="mi">1024</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span> <span class="p">{</span>   
-      <span class="kt">int</span><span class="o">*</span> <span class="n">table</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">blocks</span><span class="p">[</span> <span class="n">inode</span><span class="o">-&gt;</span><span class="n">indirectblock</span> <span class="p">];</span>
-      <span class="k">return</span> <span class="n">table</span><span class="p">[</span> <span class="n">block_count</span> <span class="o">-</span> <span class="mi">10</span> <span class="p">];</span>
-  <span class="p">}</span>
-  <span class="c1">// For huge files we will use a table of tables</span>
-  <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="p">(</span><span class="n">block_count</span> <span class="o">-</span> <span class="mi">1034</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1024</span> <span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="p">(</span><span class="n">block_count</span> <span class="o">-</span> <span class="mi">1034</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1024</span><span class="p">;</span>
-  <span class="n">assert</span><span class="p">(</span><span class="n">i</span><span class="o">&lt;</span><span class="mi">1024</span><span class="p">);</span> <span class="c1">// triple-indirect is not implemented here!</span>
+  // Use indirect block for the next 1024 blocks:
+  // Assumes 1024 ints can fit inside each block!
+  if( block_count &lt; 1024 + 10) {   
+      int* table = (int*) &amp; blocks[ inode-&gt;indirectblock ];
+      return table[ block_count - 10 ];
+  }
+  // For huge files we will use a table of tables
+  int i = (block_count - 1034) / 1024 , j = (block_count - 1034) % 1024;
+  assert(i&lt;1024); // triple-indirect is not implemented here!
 
-  <span class="kt">int</span><span class="o">*</span> <span class="n">table1</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">blocks</span><span class="p">[</span> <span class="n">inode</span><span class="o">-&gt;</span><span class="n">doubleindirectblock</span> <span class="p">];</span>
-   <span class="c1">// The first table tells us where to read the second table ...</span>
-  <span class="kt">int</span><span class="o">*</span> <span class="n">table2</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">blocks</span><span class="p">[</span>   <span class="n">table1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>   <span class="p">];</span>
-  <span class="k">return</span> <span class="n">table2</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+  int* table1 = (int*) &amp; blocks[ inode-&gt;doubleindirectblock ];
+   // The first table tells us where to read the second table ...
+  int* table2 = (int*) &amp; blocks[   table1[i]   ];
+  return table2[j];
 
-   <span class="c1">// For gigantic files we will need to implement triple-indirect (table of tables of tables)</span>
-<span class="p">}</span>
-</pre></div>
+   // For gigantic files we will need to implement triple-indirect (table of tables of tables)
+}</code></pre>
 
 
 <p>Notice that reading a byte using double indirect requires 3 disk block reads (two tables and the actual data block).</p>          </div>

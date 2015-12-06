@@ -78,9 +78,8 @@ For example, one CPU might be processing the game AI while another thread is com
 <h2>Hello world pthread example</h2>
 <p>To use pthreads you will need to include <code>pthread.h</code> AND you need to compile with <code>-pthread</code> (or <code>-lpthread</code>) compiler option. This option tells the compiler that your program requires threading support</p>
 <p>To create a thread use the function <code>pthread_create</code>. This function takes four arguments:</p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="nf">pthread_create</span><span class="p">(</span><span class="kt">pthread_t</span> <span class="o">*</span><span class="kr">thread</span><span class="p">,</span> <span class="k">const</span> <span class="kt">pthread_attr_t</span> <span class="o">*</span><span class="n">attr</span><span class="p">,</span>
-                   <span class="kt">void</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">start_routine</span><span class="p">)</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">),</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">);</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
+                   void *(*start_routine) (void *), void *arg);</code></pre>
 
 
 <ul>
@@ -91,27 +90,25 @@ For example, one CPU might be processing the game AI while another thread is com
 </ul>
 <p>The argument <code>void *(*start_routine) (void *)</code> is difficult to read! It means a pointer that takes a <code>void *</code> pointer and returns a <code>void *</code> pointer. It looks like a function declaration except that the name of the function is wrapped with <code>(* .... )</code></p>
 <p>Here's the simplest example:</p>
-<div class="highlight"><pre><span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;pthread.h&gt;</span>
-<span class="c1">// remember to set compilation option -pthread</span>
+<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
+#include &lt;pthread.h&gt;
+// remember to set compilation option -pthread
 
-<span class="kt">void</span> <span class="o">*</span><span class="nf">busy</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
-<span class="c1">// ptr will point to &quot;Hi&quot;</span>
-    <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Hello World&quot;</span><span class="p">);</span>
-    <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kt">pthread_t</span> <span class="n">id</span><span class="p">;</span>
-    <span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">id</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">busy</span><span class="p">,</span> <span class="s">&quot;Hi&quot;</span><span class="p">);</span>
-    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{}</span> <span class="c1">// Loop forever</span>
-<span class="p">}</span>
-</pre></div>
+void *busy(void *ptr) {
+// ptr will point to &quot;Hi&quot;
+    puts(&quot;Hello World&quot;);
+    return NULL;
+}
+int main() {
+    pthread_t id;
+    pthread_create(&amp;id, NULL, busy, &quot;Hi&quot;);
+    while (1) {} // Loop forever
+}</code></pre>
 
 
 <p>If we want to wait for our thread to finish use <code>pthread_join</code></p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="o">*</span><span class="n">result</span><span class="p">;</span>
-<span class="n">pthread_join</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">result</span><span class="p">);</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">void *result;
+pthread_join(id, &amp;result);</code></pre>
 
 
 <p>In the above example, <code>result</code> will be <code>null</code> because the busy function returned <code>null</code>.<br />

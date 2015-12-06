@@ -69,7 +69,7 @@
 <h2>How do I send a signal to a process from the shell?</h2>
 <p>You already know one way to send a <code>SIG_INT</code> just type <code>CTRL-C</code> <br />
 From the shell you can use <code>kill</code> (if you know the process id) and <code>killall</code> (if you know the process name)</p>
-<div class="highlight"><pre># First let&#39;s use ps and grep to find the process we want to send a signal to
+<pre class="highlight"><code># First let's use ps and grep to find the process we want to send a signal to
 $ ps au | grep myprogram
 angrave  4409   0.0  0.0  2434892    512 s004  R+    2:42PM   0:00.00 myprogram 1 2 3
 
@@ -78,38 +78,33 @@ $ kill -SIGINT 4409
 
 #Send SIGKILL (terminate the process)
 $ kill -SIGKILL 4409
-$ kill -9 4409
-</pre></div>
+$ kill -9 4409</code></pre>
 
 
 <p><code>killall</code> is similar except that it matches by program name. The next two example, sends a <code>SIGINT</code> and then <code>SIGKILL</code> to terminate the processes that are running <code>myprogram</code></p>
-<div class="highlight"><pre># Send SIGINT (SIGINT can be ignored)
+<pre class="highlight"><code># Send SIGINT (SIGINT can be ignored)
 $ killall -SIGINT myprogram
 
 # SIGKILL (-9) cannot be ignored! 
-$ killall -9 myprogram
-</pre></div>
+$ killall -9 myprogram</code></pre>
 
 
 <h2>How do I send a signal to a process from the running C program?</h2>
 <p>Use <code>raise</code> or <code>kill</code></p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="nf">raise</span><span class="p">(</span><span class="kt">int</span> <span class="n">sig</span><span class="p">);</span> <span class="c1">// Send a signal to myself!</span>
-<span class="kt">int</span> <span class="nf">kill</span><span class="p">(</span><span class="kt">pid_t</span> <span class="n">pid</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sig</span><span class="p">);</span> <span class="c1">// Send a signal to another process</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">int raise(int sig); // Send a signal to myself!
+int kill(pid_t pid, int sig); // Send a signal to another process</code></pre>
 
 
 <p>For non-root processes, signals can only be sent to processes of the same user i.e. you cant just SIGKILL my processes! See kill(2) i.e. man -s2 for more details.</p>
 <h2>How do I send a signal to a specific thread?</h2>
 <p>Use <code>pthread_kill</code></p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="n">pthread_kill</span><span class="p">(</span><span class="kt">pthread_t</span> <span class="kr">thread</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sig</span><span class="p">)</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">int pthread_kill(pthread_t thread, int sig)</code></pre>
 
 
 <p>In the example below, the newly created thread executing <code>func</code> will be interrupted by <code>SIGINT</code></p>
-<div class="highlight"><pre><span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tid</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
-<span class="n">pthread_kill</span><span class="p">(</span><span class="n">tid</span><span class="p">,</span> <span class="n">SIGINT</span><span class="p">);</span>
-<span class="n">pthread_kill</span><span class="p">(</span><span class="n">pthread_self</span><span class="p">(),</span> <span class="n">SIGKILL</span><span class="p">);</span> <span class="c1">// send SIGKILL to myself</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">pthread_create(&amp;tid, NULL, func, args);
+pthread_kill(tid, SIGINT);
+pthread_kill(pthread_self(), SIGKILL); // send SIGKILL to myself</code></pre>
 
 
 <h2>Will <code>pthread_kill( threadid, SIGKILL)</code> kill the process or thread?</h2>

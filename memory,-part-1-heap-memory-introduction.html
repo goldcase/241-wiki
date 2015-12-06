@@ -77,86 +77,79 @@
 <p>On typical architectures, the heap is part of the <code>Data segment</code> and starts just above the code and global variables. </p>
 <h2>Do programs need to call brk or sbrk?</h2>
 <p>Not typically (though calling <code>sbrk(0)</code> can be interesting because it tells you where your heap currently ends). Instead programs use <code>malloc,calloc,realloc</code> and <code>free</code> which are part of the C library. The internal implementation of these functions will call <code>sbrk</code> when additional heap memory is required.</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="o">*</span><span class="n">top_of_heap</span> <span class="o">=</span> <span class="n">sbrk</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-<span class="n">malloc</span><span class="p">(</span><span class="mi">16384</span><span class="p">);</span>
-<span class="kt">void</span> <span class="o">*</span><span class="n">top_of_heap2</span> <span class="o">=</span> <span class="n">sbrk</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
-<span class="n">printf</span><span class="p">(</span><span class="s">&quot;The top of heap went from %p to %p </span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">top_of_heap</span><span class="p">,</span> <span class="n">top_of_heap2</span><span class="p">);</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">void *top_of_heap = sbrk(0);
+malloc(16384);
+void *top_of_heap2 = sbrk(0);
+printf(&quot;The top of heap went from %p to %p \n&quot;, top_of_heap, top_of_heap2);</code></pre>
 
 
 <p>Example output: <code>The top of heap went from 0x4000 to 0xa000</code></p>
 <h2>What is calloc?</h2>
 <p>Unlike <code>malloc</code>, <code>calloc</code> initializes memory contents to zero and also takes two arguments (the number of items and the size in bytes of each item). A naive but readable implementation of <code>calloc</code> looks like this:</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="o">*</span><span class="nf">calloc</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">n</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">size</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">size_t</span> <span class="n">total</span> <span class="o">=</span> <span class="n">n</span> <span class="o">*</span> <span class="n">size</span><span class="p">;</span> <span class="c1">// Does not check for overflow!</span>
-    <span class="kt">void</span> <span class="o">*</span><span class="n">result</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">total</span><span class="p">);</span>
+<pre class="highlight"><code class="language-C">void *calloc(size_t n, size_t size)
+{
+    size_t total = n * size; // Does not check for overflow!
+    void *result = malloc(total);
 
-    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">result</span><span class="p">)</span> <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    if (!result) return NULL;
 
-<span class="c1">// If we&#39;re using new memory pages </span>
-<span class="c1">// just allocated from the system by calling sbrk</span>
-<span class="c1">// then they will be zero so zero-ing out is unnecessary,</span>
+// If we're using new memory pages 
+// just allocated from the system by calling sbrk
+// then they will be zero so zero-ing out is unnecessary,
 
-    <span class="n">memset</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">total</span><span class="p">);</span>
-    <span class="k">return</span> <span class="n">result</span><span class="p">;</span> 
-<span class="p">}</span>
-</pre></div>
+    memset(result, 0, total);
+    return result; 
+}</code></pre>
 
 
 <p>An advanced discussion of these limitations is <a href="http://locklessinc.com/articles/calloc/">here</a>.</p>
 <p>Programmers often use <code>calloc</code> rather than explicitly calling <code>memset</code> after <code>malloc</code>, to set the memory contents to zero. Note <code>calloc(x,y)</code> is identical to <code>calloc(y,x)</code>, but you should follow the conventions of the manual.</p>
-<div class="highlight"><pre><span class="c1">// Ensure our memory is initialized to zero</span>
-<span class="kt">link_t</span> <span class="o">*</span><span class="n">link</span>  <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mi">256</span><span class="p">);</span>
-<span class="n">memset</span><span class="p">(</span><span class="n">link</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">256</span><span class="p">);</span> <span class="c1">// Assumes malloc returned a valid address!</span>
+<pre class="highlight"><code class="language-C">// Ensure our memory is initialized to zero
+link_t *link  = malloc(256);
+memset(link, 0, 256); // Assumes malloc returned a valid address!
 
-<span class="kt">link_t</span> <span class="o">*</span><span class="n">link</span> <span class="o">=</span> <span class="n">calloc</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">256</span><span class="p">);</span> <span class="c1">// safer: calloc(1, sizeof(link_t));</span>
-</pre></div>
+link_t *link = calloc(1, 256); // safer: calloc(1, sizeof(link_t));</code></pre>
 
 
 <h2>Why is the memory that is first returned by sbrk initialized to zero?</h2>
 <p>If the operating system did not zero out contents of physical RAM it might be possible for one process to learn about the memory of another process that had previously used the memory. This would be a security leak.</p>
 <p>Unfortunately this means that for <code>malloc</code> requests before any memory has been freed and simple programs (which end up using newly reserved memory from the system) the memory is <em>often</em> zero. Then programmers mistaken write C programs that assume malloc'd memory will <em>always</em> be zero.</p>
-<div class="highlight"><pre><span class="kt">char</span><span class="o">*</span> <span class="n">ptr</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mi">300</span><span class="p">);</span>
-<span class="c1">// contents is probably zero because we get brand new memory</span>
-<span class="c1">// so beginner programs appear to work!</span>
-<span class="c1">// strcpy(ptr, &quot;Some data&quot;); // work with the data</span>
-<span class="n">free</span><span class="p">(</span><span class="n">ptr</span><span class="p">);</span>
-<span class="c1">// later</span>
-<span class="kt">char</span> <span class="o">*</span><span class="n">ptr2</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="mi">308</span><span class="p">);</span> <span class="c1">// Contents might now contain existing data and is probably not zero</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">char* ptr = malloc(300);
+// contents is probably zero because we get brand new memory
+// so beginner programs appear to work!
+// strcpy(ptr, &quot;Some data&quot;); // work with the data
+free(ptr);
+// later
+char *ptr2 = malloc(308); // Contents might now contain existing data and is probably not zero</code></pre>
 
 
 <h2>Why doesn't malloc always initialize memory to zero?</h2>
 <p>Performance! We want malloc to be as fast as possible. Zeroing out memory may be unnecessary.</p>
 <h2>What is realloc and when would you use it?</h2>
 <p><code>realloc</code> allows you to resize an existing memory allocation that was previously allocated on the heap (via malloc,calloc or realloc). The most common use of realloc is to resize memory used to hold an array of values.A naive but readable version of realloc is suggested below</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="o">*</span> <span class="nf">realloc</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span> <span class="n">ptr</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">newsize</span><span class="p">)</span> <span class="p">{</span>
-  <span class="c1">// Simple implementation always reserves more memory</span>
-  <span class="c1">// and has no error checking</span>
-  <span class="kt">void</span> <span class="o">*</span><span class="n">result</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">newsize</span><span class="p">);</span> 
-  <span class="kt">size_t</span> <span class="n">oldsize</span> <span class="o">=</span>  <span class="p">...</span> <span class="c1">//(depends on allocator&#39;s internal data structure)</span>
-  <span class="k">if</span> <span class="p">(</span><span class="n">ptr</span><span class="p">)</span> <span class="n">memcpy</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">ptr</span><span class="p">,</span> <span class="n">newsize</span> <span class="o">&lt;</span> <span class="n">oldsize</span> <span class="o">?</span> <span class="nl">newsize</span> <span class="p">:</span> <span class="n">oldsize</span><span class="p">);</span>
-  <span class="n">free</span><span class="p">(</span><span class="n">ptr</span><span class="p">);</span>
-  <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">void * realloc(void * ptr, size_t newsize) {
+  // Simple implementation always reserves more memory
+  // and has no error checking
+  void *result = malloc(newsize); 
+  size_t oldsize =  ... //(depends on allocator's internal data structure)
+  if (ptr) memcpy(result, ptr, newsize &lt; oldsize ? newsize : oldsize);
+  free(ptr);
+  return result;
+}</code></pre>
 
 
 <p>An INCORRECT use of realloc is shown below:</p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="o">*</span><span class="n">array</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">);</span>
-<span class="n">array</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span> <span class="n">array</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span> <span class="o">=</span> <span class="mi">20</span><span class="p">;</span>
-<span class="c1">// Ooops need a bigger array - so use realloc..</span>
-<span class="n">realloc</span> <span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span> <span class="c1">// ERRORS!</span>
-<span class="n">array</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">30</span><span class="p">;</span> 
-</pre></div>
+<pre class="highlight"><code class="language-C">int *array = malloc(sizeof(int) * 2);
+array[0] = 10; array[1]; = 20;
+// Ooops need a bigger array - so use realloc..
+realloc (array, 3); // ERRORS!
+array[2] = 30; </code></pre>
 
 
 <p>The above code contains two mistakes. Firstly we needed 3*sizeof(int) bytes not 3 bytes.<br />
 Secondly realloc may need to move the existing contents of the memory to a new location. For example, there may not be sufficient space because the neighboring bytes are already allocated. A correct use of realloc is shown below.</p>
-<div class="highlight"><pre><span class="n">array</span> <span class="o">=</span> <span class="n">realloc</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="mi">3</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">));</span>
-<span class="c1">// If array is copied to a new location then old allocation will be freed.</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">array = realloc(array, 3 * sizeof(int));
+// If array is copied to a new location then old allocation will be freed.</code></pre>
 
 
 <p>A robust version would also check for a <code>NULL</code> return value. Note <code>realloc</code> can be used to grow and shrink allocations. </p>
@@ -165,15 +158,14 @@ Secondly realloc may need to move the existing contents of the memory to a new l
 <h2>How important is that memory allocation is fast?</h2>
 <p>Very! Allocating and de-allocating heap memory is a common operation in most applications.</p>
 <h2>What is the silliest malloc and free implementation and what is wrong with it?</h2>
-<div class="highlight"><pre><span class="kt">void</span><span class="o">*</span> <span class="nf">malloc</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">size</span><span class="p">)</span>
-<span class="c1">// Ask the system for more bytes by extending the heap space. </span>
-<span class="c1">// sbrk Returns -1 on failure</span>
-   <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">sbrk</span><span class="p">(</span><span class="n">size</span><span class="p">);</span> 
-   <span class="k">if</span><span class="p">(</span><span class="n">p</span> <span class="o">==</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span> <span class="c1">// No space left</span>
-   <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
-<span class="p">}</span>
-<span class="kt">void</span> <span class="n">free</span><span class="p">()</span> <span class="p">{</span><span class="cm">/* Do nothing */</span><span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">void* malloc(size_t size)
+// Ask the system for more bytes by extending the heap space. 
+// sbrk Returns -1 on failure
+   void *p = sbrk(size); 
+   if(p == (void *) -1) return NULL; // No space left
+   return p;
+}
+void free() {/* Do nothing */}</code></pre>
 
 
 <p>The above implementation suffers from two major drawbacks:<br />

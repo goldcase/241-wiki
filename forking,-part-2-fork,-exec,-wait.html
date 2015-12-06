@@ -67,18 +67,17 @@
             <h3>Forking, Part 2: Fork, Exec, Wait</h3>
 
 <h2>What does the following 'exec' example do?</h2>
-<div class="highlight"><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-   <span class="n">close</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// close standard out</span>
-   <span class="n">open</span><span class="p">(</span><span class="s">&quot;log.txt&quot;</span><span class="p">,</span> <span class="n">O_RDWR</span> <span class="o">|</span> <span class="n">O_CREAT</span> <span class="o">|</span> <span class="n">O_APPEND</span><span class="p">,</span> <span class="n">S_IRUSR</span> <span class="o">|</span> <span class="n">S_IWUSR</span><span class="p">);</span>
-   <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Captain&#39;s log&quot;</span><span class="p">);</span>
-   <span class="n">chdir</span><span class="p">(</span><span class="s">&quot;/usr/include&quot;</span><span class="p">);</span>
-   <span class="c1">// execl( executable,  arguments for executable including program name and NULL at the end)</span>
+<pre class="highlight"><code class="language-C">int main() {
+   close(1); // close standard out
+   open(&quot;log.txt&quot;, O_RDWR | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
+   puts(&quot;Captain's log&quot;);
+   chdir(&quot;/usr/include&quot;);
+   // execl( executable,  arguments for executable including program name and NULL at the end)
 
-   <span class="n">execl</span><span class="p">(</span><span class="s">&quot;/bin/ls&quot;</span><span class="p">,</span> <span class="cm">/* Remaining items sent to ls*/</span> <span class="s">&quot;/bin/ls&quot;</span><span class="p">,</span> <span class="s">&quot;.&quot;</span><span class="p">,</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span> <span class="nb">NULL</span><span class="p">);</span> <span class="c1">// &quot;ls .&quot;</span>
-   <span class="n">perror</span><span class="p">(</span><span class="s">&quot;exec failed&quot;</span><span class="p">);</span>
-   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// Not expected</span>
-<span class="p">}</span>
-</pre></div>
+   execl(&quot;/bin/ls&quot;, /* Remaining items sent to ls*/ &quot;/bin/ls&quot;, &quot;.&quot;, (char *) NULL); // &quot;ls .&quot;
+   perror(&quot;exec failed&quot;);
+   return 0; // Not expected
+}</code></pre>
 
 
 <p>There's no error checking in the above code (we assume close,open,chdir etc works as expected).<br />
@@ -114,8 +113,7 @@ Only when the child has been 'waited on' will the slot be available again.</p>
 <p>Once a process completes, any of its children will be assigned to "init" - the first process with pid of 1. Thus these children would see getppid() return a value of 1. The init process automatically waits for all of its children, thus removing zombies from the system.</p>
 <h2>How do I prevent zombies? (Warning: Simplified answer)</h2>
 <p>Wait on your child!</p>
-<div class="highlight"><pre><span class="n">waitpid</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span> <span class="c1">// Clean up and wait for my child process to finish.</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">waitpid(child, &amp;status, 0); // Clean up and wait for my child process to finish.</code></pre>
 
 
 <p>Note we assume that the only reason to get a SIGCHLD event is that a child has finished (this is not quite true - see man page for more details).</p>
@@ -124,39 +122,37 @@ Read on for a discussion of a more robust implementation.</p>
 <h2>How can I asynchronously wait for my child using SIGCHLD? (ADVANCED)</h2>
 <p>Warning: This section uses signals which we have not yet fully introduced.<br />
 The parent gets the signal SIGCHLD when a child completes, so the signal handler can wait on the process. A slightly simplified version is shown below.</p>
-<div class="highlight"><pre><span class="kt">pid_t</span> <span class="n">child</span><span class="p">;</span>
+<pre class="highlight"><code class="language-C">pid_t child;
 
-<span class="kt">void</span> <span class="nf">cleanup</span><span class="p">(</span><span class="kt">int</span> <span class="n">signal</span><span class="p">)</span> <span class="p">{</span>
-  <span class="kt">int</span> <span class="n">status</span><span class="p">;</span>
-  <span class="n">waitpid</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-  <span class="n">write</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s">&quot;cleanup!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="mi">9</span><span class="p">);</span>
-<span class="p">}</span>
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-   <span class="c1">// Register signal handler BEFORE the child can finish</span>
-   <span class="n">signal</span><span class="p">(</span><span class="n">SIGCHLD</span><span class="p">,</span> <span class="n">cleanup</span><span class="p">);</span> <span class="c1">// or better - sigaction</span>
-   <span class="n">child</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
-   <span class="k">if</span> <span class="p">(</span><span class="n">child</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span> <span class="n">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);}</span>
+void cleanup(int signal) {
+  int status;
+  waitpid(child, &amp;status, 0);
+  write(1,&quot;cleanup!\n&quot;,9);
+}
+int main() {
+   // Register signal handler BEFORE the child can finish
+   signal(SIGCHLD, cleanup); // or better - sigaction
+   child = fork();
+   if (child == -1) { exit(EXIT_FAILURE);}
 
-   <span class="k">if</span> <span class="p">(</span><span class="n">child</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="cm">/* I am the child!*/</span>
-     <span class="c1">// Do background stuff e.g. call exec   </span>
-   <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="cm">/* I&#39;m the parent! */</span>
-      <span class="n">sleep</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span> <span class="c1">// so we can see the cleanup</span>
-      <span class="n">puts</span><span class="p">(</span><span class="s">&quot;Parent is done&quot;</span><span class="p">);</span>
-   <span class="p">}</span>
-   <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span> 
-</pre></div>
+   if (child == 0) { /* I am the child!*/
+     // Do background stuff e.g. call exec   
+   } else { /* I'm the parent! */
+      sleep(4); // so we can see the cleanup
+      puts(&quot;Parent is done&quot;);
+   }
+   return 0;
+} </code></pre>
 
 
 <p>The above example however misses a couple of subtle points:<br />
 <em> More than one child may have finished but the parent will only get one SIGCHLD signal (signals are not queued)<br />
 </em> SIGCHLD signals can be sent for other reasons (e.g. a child process is temporarily stopped)</p>
 <p>A more robust code to reap zombies is shown below.</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="nf">cleanup</span><span class="p">(</span><span class="kt">int</span> <span class="n">signal</span><span class="p">)</span> <span class="p">{</span>
-  <span class="kt">int</span> <span class="n">status</span><span class="p">;</span>
-  <span class="k">while</span> <span class="p">(</span><span class="n">waitpid</span><span class="p">((</span><span class="kt">pid_t</span><span class="p">)</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">WNOHANG</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{}</span>
-<span class="p">}</span>
-</pre></div>          </div>
+<pre class="highlight"><code class="language-C">void cleanup(int signal) {
+  int status;
+  while (waitpid((pid_t) (-1), 0, WNOHANG) &gt; 0) {}
+}</code></pre>          </div>
         </div>
       </main>
     </div>

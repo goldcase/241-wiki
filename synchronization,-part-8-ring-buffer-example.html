@@ -71,73 +71,69 @@
 As data is added (enqueued) to the front of the queue or removed (dequeued) from tail of the queue, the current items in the buffer form a train that appears to circle the track<br />
 <img alt="RingBuffer" src="https://raw.githubusercontent.com/wiki/angrave/SystemProgramming/RingBuffer-Angrave2014-1024x768.png" /><br />
 A simple (single-threaded) implementation is shown below. Note enqueue and dequeue do not guard against underflow or overflow - it's possible to add an item when when the queue is full and possible to remove an item when the queue is empty. For example if we added 20 integers (1,2,3...) to the queue and did not dequeue any items then values <code>17,18,19,20</code> would overwrite the <code>1,2,3,4</code>. We won't fix this problem right now, instead when we create the multi-threaded version we will ensure enqueue-ing and dequeue-ing threads are blocked while the ring buffer is full or empty respectively.</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="o">*</span><span class="n">buffer</span><span class="p">[</span><span class="mi">16</span><span class="p">];</span>
-<span class="kt">int</span> <span class="n">in</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">out</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<pre class="highlight"><code class="language-C">void *buffer[16];
+int in = 0, out = 0;
 
-<span class="kt">void</span> <span class="nf">enqueue</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">value</span><span class="p">)</span> <span class="p">{</span> <span class="cm">/* Add one item to the front of the queue*/</span>
-  <span class="n">buffer</span><span class="p">[</span><span class="n">in</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
-  <span class="n">in</span><span class="o">++</span><span class="p">;</span> <span class="cm">/* Advance the index for next time */</span>
-  <span class="k">if</span> <span class="p">(</span><span class="n">in</span> <span class="o">==</span> <span class="mi">16</span><span class="p">)</span> <span class="n">in</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="cm">/* Wrap around! */</span>
-<span class="p">}</span>
+void enqueue(void *value) { /* Add one item to the front of the queue*/
+  buffer[in] = value;
+  in++; /* Advance the index for next time */
+  if (in == 16) in = 0; /* Wrap around! */
+}
 
-<span class="kt">void</span> <span class="o">*</span><span class="nf">dequeue</span><span class="p">()</span> <span class="p">{</span> <span class="cm">/* Remove one item to the end of the queue.*/</span>
-  <span class="kt">void</span> <span class="o">*</span><span class="n">result</span> <span class="o">=</span> <span class="n">buffer</span><span class="p">[</span><span class="n">out</span><span class="p">];</span>
-  <span class="n">out</span><span class="o">++</span><span class="p">;</span>
-  <span class="k">if</span> <span class="p">(</span><span class="n">out</span> <span class="o">==</span> <span class="mi">16</span><span class="p">)</span> <span class="n">out</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-  <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+void *dequeue() { /* Remove one item to the end of the queue.*/
+  void *result = buffer[out];
+  out++;
+  if (out == 16) out = 0;
+  return result;
+}</code></pre>
 
 
 <h2>What are gotchas of implementing a Ring Buffer?</h2>
 <p>It's very tempting to write the enqueue or dequeue method in the following compact form (N is the capacity of the buffer e.g. 16):</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">enqueue</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">value</span><span class="p">)</span>
-  <span class="n">b</span><span class="p">[</span> <span class="p">(</span><span class="n">in</span><span class="o">++</span><span class="p">)</span> <span class="o">%</span> <span class="n">N</span> <span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">void enqueue(void *value)
+  b[ (in++) % N ] = value;
+}</code></pre>
 
 
 <p>This method would appear to work (pass simple tests etc) but contains a subtle bug. With enough enqueue operations (a bit more than two billion) the int value of <code>in</code> will overflow and become negative! The modulo (or 'remainder') operator <code>%</code> preserves the sign. Thus you might end up writing into <code>b[-14]</code>  for example! </p>
 <p>A compact form is correct uses bit masking provided N is 2^x (16,32,64,...)</p>
-<div class="highlight"><pre><span class="n">b</span><span class="p">[</span> <span class="p">(</span><span class="n">in</span><span class="o">++</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">b[ (in++) &amp; (N-1) ] = value;</code></pre>
 
 
 <p>This buffer does not yet prevent buffer underflow or overflow. For that, we'll turn to our multi-threaded attempt that will block a thread until there is space or there is at least one item to remove.</p>
 <h2>Checking a multi-threaded implementation for correctness (Example 1)</h2>
 <p>The following code is an incorrect implementation. What will happen? Will <code>enqueue</code> and/or <code>dequeue</code> block? Is mutual exclusion satisfied? Can the buffer underflow? Can the buffer overflow?<br />
 For clarity <code>pthread_mutex</code> is shortened to <code>p_m</code> and we assume sem_wait cannot be interrupted.</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="o">*</span><span class="n">b</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span>
-<span class="kt">int</span> <span class="n">in</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">out</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="kt">p_m_t</span> <span class="n">lock</span>
-<span class="kt">sem_t</span> <span class="n">s1</span><span class="p">,</span><span class="n">s2</span>
-<span class="kt">void</span> <span class="n">init</span><span class="p">()</span> <span class="p">{</span> 
-    <span class="n">p_m_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">)</span>
-    <span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
-    <span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-<span class="p">}</span>
+<pre class="highlight"><code class="language-C">void *b[16]
+int in = 0, out = 0
+p_m_t lock
+sem_t s1,s2
+void init() { 
+    p_m_init(&amp;lock, NULL)
+    sem_init(&amp;s1, 0, 16)
+    sem_init(&amp;s2, 0, 0)
+}
 
-<span class="n">enqueue</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">value</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">p_m_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">)</span>
+enqueue(void *value) {
+    p_m_lock(&amp;lock)
 
-    <span class="c1">// Hint: Wait while zero. Decrement and return</span>
-    <span class="n">sem_wait</span><span class="p">(</span> <span class="o">&amp;</span><span class="n">s1</span> <span class="p">)</span> 
+    // Hint: Wait while zero. Decrement and return
+    sem_wait( &amp;s1 ) 
 
-    <span class="n">b</span><span class="p">[</span> <span class="p">(</span><span class="n">in</span><span class="o">++</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    b[ (in++) &amp; (N-1) ] = value
 
-    <span class="c1">// Hint: Increment. Will wake up a waiting thread </span>
-    <span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s1</span><span class="p">)</span> 
-    <span class="n">p_m_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">)</span>
-<span class="p">}</span>
-<span class="kt">void</span> <span class="o">*</span><span class="n">dequeue</span><span class="p">(){</span>
-    <span class="n">p_m_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">)</span>
-    <span class="n">sem_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s2</span><span class="p">)</span>
-    <span class="kt">void</span> <span class="o">*</span><span class="n">result</span> <span class="o">=</span> <span class="n">b</span><span class="p">[(</span><span class="n">out</span><span class="o">++</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">15</span><span class="p">]</span>
-    <span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s2</span><span class="p">)</span>
-    <span class="n">p_m_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">result</span>
-<span class="p">}</span>
-</pre></div>
+    // Hint: Increment. Will wake up a waiting thread 
+    sem_post(&amp;s1) 
+    p_m_unlock(&amp;lock)
+}
+void *dequeue(){
+    p_m_lock(&amp;lock)
+    sem_wait(&amp;s2)
+    void *result = b[(out++) &amp; 15]
+    sem_post(&amp;s2)
+    p_m_unlock(&amp;lock)
+    return result
+}</code></pre>
 
 
 <h2>Analysis</h2>
@@ -151,36 +147,35 @@ For clarity <code>pthread_mutex</code> is shortened to <code>p_m</code> and we a
 <h2>Checking a multi-threaded implementation for correctness (Example 1)</h2>
 <p>The following code is an incorrect implementation. What will happen? Will <code>enqueue</code> and/or <code>dequeue</code> block? Is mutual exclusion satisfied? Can the buffer underflow? Can the buffer overflow?<br />
 For clarity <code>pthread_mutex</code> is shortened to <code>p_m</code> and we assume sem_wait cannot be interrupted.</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="o">*</span><span class="n">b</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span>
-<span class="kt">int</span> <span class="n">in</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">out</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="kt">p_m_t</span> <span class="n">lock</span>
-<span class="kt">sem_t</span> <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span>
-<span class="kt">void</span> <span class="n">init</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">16</span><span class="p">)</span>
-    <span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
-<span class="p">}</span>
+<pre class="highlight"><code class="language-C">void *b[16]
+int in = 0, out = 0
+p_m_t lock
+sem_t s1, s2
+void init() {
+    sem_init(&amp;s1,0,16)
+    sem_init(&amp;s2,0,0)
+}
 
-<span class="n">enqueue</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">value</span><span class="p">){</span>
+enqueue(void *value){
 
- <span class="n">sem_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s2</span><span class="p">)</span>
- <span class="n">p_m_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">)</span>
+ sem_wait(&amp;s2)
+ p_m_lock(&amp;lock)
 
- <span class="n">b</span><span class="p">[</span> <span class="p">(</span><span class="n">in</span><span class="o">++</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+ b[ (in++) &amp; (N-1) ] = value
 
- <span class="n">p_m_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">)</span>
- <span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s1</span><span class="p">)</span>
-<span class="p">}</span>
+ p_m_unlock(&amp;lock)
+ sem_post(&amp;s1)
+}
 
-<span class="kt">void</span> <span class="o">*</span><span class="n">dequeue</span><span class="p">(){</span>
-  <span class="n">sem_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s1</span><span class="p">)</span>
-  <span class="n">p_m_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">)</span>
-  <span class="kt">void</span> <span class="o">*</span><span class="n">result</span> <span class="o">=</span> <span class="n">b</span><span class="p">[(</span><span class="n">out</span><span class="o">++</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">15</span><span class="p">]</span>
-  <span class="n">p_m_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">)</span>
-  <span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s2</span><span class="p">)</span>
+void *dequeue(){
+  sem_wait(&amp;s1)
+  p_m_lock(&amp;lock)
+  void *result = b[(out++) &amp; 15]
+  p_m_unlock(&amp;lock)
+  sem_post(&amp;s2)
 
-  <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+  return result;
+}</code></pre>
 
 
 <h3>Analysis</h3>
@@ -192,55 +187,52 @@ For clarity <code>pthread_mutex</code> is shortened to <code>p_m</code> and we a
 <h2>Correct implementation of a ring buffer</h2>
 <p>The pseudo-code (<code>pthread_mutex</code> shortened to <code>p_m</code> etc) is shown below.</p>
 <p>As the mutex lock is stored in global (static) memory it can be initialized with  <code>PTHREAD_MUTEX_INITIALIZER</code>.If we had allocated space for the mutex on the heap, then we would have used <code>pthread_mutex_init(ptr, NULL)</code></p>
-<div class="highlight"><pre><span class="cp">#include &lt;pthread.h&gt;</span>
-<span class="cp">#include &lt;semaphore.h&gt;</span>
-<span class="c1">// N must be 2^i</span>
-<span class="cp">#define N (16)</span>
+<pre class="highlight"><code class="language-C">#include &lt;pthread.h&gt;
+#include &lt;semaphore.h&gt;
+// N must be 2^i
+#define N (16)
 
-<span class="kt">void</span> <span class="o">*</span><span class="n">b</span><span class="p">[</span><span class="n">N</span><span class="p">]</span>
-<span class="kt">int</span> <span class="n">in</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">out</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="kt">p_m_t</span> <span class="n">lock</span> <span class="o">=</span> <span class="n">PTHREAD_MUTEX_INITIALIZER</span>
-<span class="kt">sem_t</span> <span class="n">countsem</span><span class="p">,</span> <span class="n">spacesem</span>
+void *b[N]
+int in = 0, out = 0
+p_m_t lock = PTHREAD_MUTEX_INITIALIZER
+sem_t countsem, spacesem
 
-<span class="kt">void</span> <span class="n">init</span><span class="p">()</span> <span class="p">{</span>
-  <span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">countsem</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-  <span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">spacesem</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
-<span class="p">}</span>
-</pre></div>
+void init() {
+  sem_init(&amp;countsem, 0, 0)
+  sem_init(&amp;spacesem, 0, 16)
+}</code></pre>
 
 
 <p>The enqueue method is shown below. Notice:<br />
 <em> The lock is only held during the critical section (access to the data structure).<br />
 </em> A complete implementation would need to guard against early returns from <code>sem_wait</code> due to POSIX signals.</p>
-<div class="highlight"><pre><span class="n">enqueue</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">value</span><span class="p">){</span>
- <span class="c1">// wait if there is no space left:</span>
- <span class="n">sem_wait</span><span class="p">(</span> <span class="o">&amp;</span><span class="n">spacesem</span> <span class="p">)</span>
+<pre class="highlight"><code class="language-C">enqueue(void *value){
+ // wait if there is no space left:
+ sem_wait( &amp;spacesem )
 
- <span class="n">p_m_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">)</span>
- <span class="n">b</span><span class="p">[</span> <span class="p">(</span><span class="n">in</span><span class="o">++</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
- <span class="n">p_m_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">)</span>
+ p_m_lock(&amp;lock)
+ b[ (in++) &amp; (N-1) ] = value
+ p_m_unlock(&amp;lock)
 
- <span class="c1">// increment the count of the number of items</span>
- <span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">countsem</span><span class="p">)</span>
-<span class="p">}</span>
-</pre></div>
+ // increment the count of the number of items
+ sem_post(&amp;countsem)
+}</code></pre>
 
 
 <p>The <code>dequeue</code> implementation is shown below. Notice the symmetry of the synchronization calls to <code>enqueue</code>. In both cases the functions first wait if the count of spaces or count of items is zero.</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="o">*</span><span class="nf">dequeue</span><span class="p">(){</span>
-  <span class="c1">// Wait if there are no items in the buffer</span>
-  <span class="n">sem_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">countsem</span><span class="p">)</span>
+<pre class="highlight"><code class="language-C">void *dequeue(){
+  // Wait if there are no items in the buffer
+  sem_wait(&amp;countsem)
 
-  <span class="n">p_m_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">)</span>
-  <span class="kt">void</span> <span class="o">*</span><span class="n">result</span> <span class="o">=</span> <span class="n">b</span><span class="p">[(</span><span class="n">out</span><span class="o">++</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
-  <span class="n">p_m_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">lock</span><span class="p">)</span>
+  p_m_lock(&amp;lock)
+  void *result = b[(out++) &amp; (N-1)]
+  p_m_unlock(&amp;lock)
 
-  <span class="c1">// Increment the count of the number of spaces</span>
-  <span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">spacesem</span><span class="p">)</span>
+  // Increment the count of the number of spaces
+  sem_post(&amp;spacesem)
 
-  <span class="k">return</span> <span class="n">result</span>
-<span class="p">}</span>
-</pre></div>
+  return result
+}</code></pre>
 
 
 <h2>Food for thought</h2>

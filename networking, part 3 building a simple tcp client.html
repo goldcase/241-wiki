@@ -67,50 +67,49 @@
             <h3>Networking, Part 3: Building a simple TCP Client</h3>
 
 <h2>Complete Simple TCP Client Example</h2>
-<div class="highlight"><pre><span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;string.h&gt;</span>
-<span class="cp">#include &lt;sys/types.h&gt;</span>
-<span class="cp">#include &lt;sys/socket.h&gt;</span>
-<span class="cp">#include &lt;netdb.h&gt;</span>
-<span class="cp">#include &lt;unistd.h&gt;</span>
+<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;netdb.h&gt;
+#include &lt;unistd.h&gt;
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="kt">int</span> <span class="n">s</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">sock_fd</span> <span class="o">=</span> <span class="n">socket</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">SOCK_STREAM</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+int main(int argc, char **argv)
+{
+    int s;
+    int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-    <span class="k">struct</span> <span class="n">addrinfo</span> <span class="n">hints</span><span class="p">,</span> <span class="o">*</span><span class="n">result</span><span class="p">;</span>
-    <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hints</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">addrinfo</span><span class="p">));</span>
-    <span class="n">hints</span><span class="p">.</span><span class="n">ai_family</span> <span class="o">=</span> <span class="n">AF_INET</span><span class="p">;</span> <span class="cm">/* IPv4 only */</span>
-    <span class="n">hints</span><span class="p">.</span><span class="n">ai_socktype</span> <span class="o">=</span> <span class="n">SOCK_STREAM</span><span class="p">;</span> <span class="cm">/* TCP */</span>
+    struct addrinfo hints, *result;
+    memset(&amp;hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_INET; /* IPv4 only */
+    hints.ai_socktype = SOCK_STREAM; /* TCP */
 
-    <span class="n">s</span> <span class="o">=</span> <span class="n">getaddrinfo</span><span class="p">(</span><span class="s">&quot;www.illinois.edu&quot;</span><span class="p">,</span> <span class="s">&quot;80&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">hints</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">result</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">s</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-            <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;getaddrinfo: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">gai_strerror</span><span class="p">(</span><span class="n">s</span><span class="p">));</span>
-            <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-    <span class="p">}</span>
+    s = getaddrinfo(&quot;www.illinois.edu&quot;, &quot;80&quot;, &amp;hints, &amp;result);
+    if (s != 0) {
+            fprintf(stderr, &quot;getaddrinfo: %s\n&quot;, gai_strerror(s));
+            exit(1);
+    }
 
-    <span class="n">connect</span><span class="p">(</span><span class="n">sock_fd</span><span class="p">,</span> <span class="n">result</span><span class="o">-&gt;</span><span class="n">ai_addr</span><span class="p">,</span> <span class="n">result</span><span class="o">-&gt;</span><span class="n">ai_addrlen</span><span class="p">);</span>
+    connect(sock_fd, result-&gt;ai_addr, result-&gt;ai_addrlen);
 
-    <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span> <span class="o">=</span> <span class="s">&quot;GET / HTTP/1.0</span><span class="se">\r\n\r\n</span><span class="s">&quot;</span><span class="p">;</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;SENDING: %s&quot;</span><span class="p">,</span> <span class="n">buffer</span><span class="p">);</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;===</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
-    <span class="n">write</span><span class="p">(</span><span class="n">sock_fd</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">strlen</span><span class="p">(</span><span class="n">buffer</span><span class="p">));</span>
+    char *buffer = &quot;GET / HTTP/1.0\r\n\r\n&quot;;
+    printf(&quot;SENDING: %s&quot;, buffer);
+    printf(&quot;===\n&quot;);
+    write(sock_fd, buffer, strlen(buffer));
 
 
-    <span class="kt">char</span> <span class="n">resp</span><span class="p">[</span><span class="mi">1000</span><span class="p">];</span>
-    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">sock_fd</span><span class="p">,</span> <span class="n">resp</span><span class="p">,</span> <span class="mi">999</span><span class="p">);</span>
-    <span class="n">resp</span><span class="p">[</span><span class="n">len</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;\0&#39;</span><span class="p">;</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">resp</span><span class="p">);</span>
+    char resp[1000];
+    int len = read(sock_fd, resp, 999);
+    resp[len] = '\0';
+    printf(&quot;%s\n&quot;, resp);
 
-    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+    return 0;
+}</code></pre>
 
 
 <p>Example output:</p>
-<div class="highlight"><pre>SENDING: GET / HTTP/1.0
+<pre class="highlight"><code>SENDING: GET / HTTP/1.0
 
 ===
 HTTP/1.1 200 OK
@@ -123,27 +122,23 @@ Content-Length: 73
 Connection: close
 Content-Type: text/html
 
-Provided by Web Services at Public Affairs at the University of Illinois
-</pre></div>
+Provided by Web Services at Public Affairs at the University of Illinois</code></pre>
 
 
 <h2>Comment on HTTP request and response</h2>
 <p>The example above demonstrates a request to the server using Hypertext Transfer Protocol.<br />
 A web page (or other resources) are requested using the following request:</p>
-<div class="highlight"><pre>GET / HTTP/1.0
-</pre></div>
+<pre class="highlight"><code>GET / HTTP/1.0</code></pre>
 
 
 <p>There are four parts (the method e.g. GET,POST,...); the resource (e.g. / /index.html /image.png); the proctocol "HTTP/1.0" and two new lines (\r\n\r\n)</p>
 <p>The server's first response line describes the HTTP version used and whether the request is successful using a 3 digit response code:</p>
-<div class="highlight"><pre>HTTP/1.1 200 OK
-</pre></div>
+<pre class="highlight"><code>HTTP/1.1 200 OK</code></pre>
 
 
 <p>If the client had requested a non existing file, e.g. <code>GET /nosuchfile.html HTTP/1.0</code><br />
 Then the first line includes the response code is the well-known <code>404</code> response code:</p>
-<div class="highlight"><pre>HTTP/1.1 404 Not Found
-</pre></div>          </div>
+<pre class="highlight"><code>HTTP/1.1 404 Not Found</code></pre>          </div>
         </div>
       </main>
     </div>

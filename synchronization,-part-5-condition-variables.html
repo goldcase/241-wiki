@@ -74,17 +74,16 @@
 <p>See [[Synchronization, Part 4: The Critical Section Problem]] for answers.</p>
 <h2>What is the 'exchange instruction' ?</h2>
 <p>The exchange instruction ('XCHG') is an atomic CPU instruction that exchanges the contents of a register with a memory location. This can be used as a basis to implement a simple mutex lock.</p>
-<div class="highlight"><pre><span class="c1">// *Pseudo-C-code* for a simple busy-waiting mutex </span>
-<span class="c1">// that uses an atomic exchange function</span>
-<span class="kt">int</span> <span class="n">lock</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// initialization</span>
+<pre class="highlight"><code class="language-C">// *Pseudo-C-code* for a simple busy-waiting mutex 
+// that uses an atomic exchange function
+int lock = 0; // initialization
 
-<span class="c1">// To enter the critical section you need to read a lock value of zero. </span>
-<span class="c1">// &#39;xchg&#39; function doesn&#39;t exist, but imagine this function is built on the atomic XCHG CPU function</span>
-<span class="c1">// i.e. it writes &#39;1&#39; into the lock variable and returns the previous contents of the memory</span>
-<span class="k">while</span> <span class="p">(</span><span class="n">xchg</span><span class="p">(</span> <span class="mi">1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">lock</span><span class="p">))</span> <span class="p">{</span><span class="cm">/*spin spin spin*/</span><span class="p">}</span>
-<span class="cm">/* Do Critical Section stuff*/</span>
-<span class="n">lock</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-</pre></div>
+// To enter the critical section you need to read a lock value of zero. 
+// 'xchg' function doesn't exist, but imagine this function is built on the atomic XCHG CPU function
+// i.e. it writes '1' into the lock variable and returns the previous contents of the memory
+while (xchg( 1, &amp;lock)) {/*spin spin spin*/}
+/* Do Critical Section stuff*/
+lock = 0;</code></pre>
 
 
 <h2>What are condition variables? How do you use them? What is Spurious Wakeup?</h2>
@@ -143,40 +142,39 @@
 <h2>Example</h2>
 <p>Condition variables are <em>always</em> used with a mutex lock.</p>
 <p>Before calling <em>wait</em>, the mutex lock must be locked and <em>wait</em> must be wrapped with a loop.</p>
-<div class="highlight"><pre><span class="kt">pthread_cond_t</span> <span class="n">cv</span><span class="p">;</span>
-<span class="kt">pthread_mutex_t</span> <span class="n">m</span><span class="p">;</span>
-<span class="kt">int</span> <span class="n">count</span><span class="p">;</span>
+<pre class="highlight"><code class="language-C">pthread_cond_t cv;
+pthread_mutex_t m;
+int count;
 
-<span class="c1">// Initialize</span>
-<span class="n">pthread_cond_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cv</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-<span class="n">pthread_mutex_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-<span class="n">count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+// Initialize
+pthread_cond_init(&amp;cv, NULL);
+pthread_mutex_init(&amp;m, NULL);
+count = 0;
 
-<span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
-<span class="k">while</span> <span class="p">(</span><span class="n">count</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">)</span> <span class="p">{</span>
-   <span class="n">pthread_cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cv</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">m</span><span class="p">);</span> 
-<span class="cm">/* Remember that cond_wait unlocks the mutex before blocking (waiting)! */</span>
-<span class="cm">/* After unlocking, other threads can claim the mutex. */</span>
-<span class="cm">/* When this thread is later woken it will */</span>
-<span class="cm">/* re-lock the mutex before returning */</span>
-<span class="p">}</span>
-<span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+pthread_mutex_lock(&amp;m);
+while (count &lt; 10) {
+   pthread_cond_wait(&amp;cv, &amp;m); 
+/* Remember that cond_wait unlocks the mutex before blocking (waiting)! */
+/* After unlocking, other threads can claim the mutex. */
+/* When this thread is later woken it will */
+/* re-lock the mutex before returning */
+}
+pthread_mutex_unlock(&amp;m);
 
-<span class="c1">//later clean up with pthread_cond_destroy(&amp;cv); and mutex_destroy </span>
+//later clean up with pthread_cond_destroy(&amp;cv); and mutex_destroy 
 
 
-<span class="c1">// In another thread increment count:</span>
-<span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-  <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
-  <span class="n">count</span><span class="o">++</span><span class="p">;</span>
-  <span class="n">pthread_cond_signal</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cv</span><span class="p">);</span>
-  <span class="cm">/* Even though the other thread is woken up it cannot not return */</span>
-  <span class="cm">/* from pthread_cond_wait until we have unlocked the mutex. This is */</span>
-  <span class="cm">/* a good thing! In fact, it is usually the best practice to call */</span>
-  <span class="cm">/* cond_signal or cond_broadcast before unlocking the mutex */</span>
-  <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
-<span class="p">}</span>
-</pre></div>
+// In another thread increment count:
+while (1) {
+  pthread_mutex_lock(&amp;m);
+  count++;
+  pthread_cond_signal(&amp;cv);
+  /* Even though the other thread is woken up it cannot not return */
+  /* from pthread_cond_wait until we have unlocked the mutex. This is */
+  /* a good thing! In fact, it is usually the best practice to call */
+  /* cond_signal or cond_broadcast before unlocking the mutex */
+  pthread_mutex_unlock(&amp;m);
+}</code></pre>
 
 
 <h2>Implementing counting semaphores</h2>
@@ -184,60 +182,55 @@
 <li>We can implement a counting semaphore using condition variables.</li>
 <li>Each semaphore needs a count, a condition variable and a mutex</li>
 </ul>
-<div class="highlight"><pre><span class="k">typedef</span> <span class="k">struct</span> <span class="kt">sem_t</span> <span class="p">{</span>
-  <span class="kt">int</span> <span class="n">count</span><span class="p">;</span> 
-  <span class="kt">pthread_mutex_t</span> <span class="n">m</span><span class="p">;</span>
-  <span class="kt">pthread_condition_t</span> <span class="n">cv</span><span class="p">;</span>
-<span class="p">}</span> <span class="kt">sem_t</span><span class="p">;</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">typedef struct sem_t {
+  int count; 
+  pthread_mutex_t m;
+  pthread_condition_t cv;
+} sem_t;</code></pre>
 
 
 <p>Implement <code>sem_init</code> to initialize the mutex and condition variable</p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="nf">sem_init</span><span class="p">(</span><span class="kt">sem_t</span> <span class="o">*</span><span class="n">s</span><span class="p">,</span> <span class="kt">int</span> <span class="n">pshared</span><span class="p">,</span> <span class="kt">int</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
-  <span class="k">if</span> <span class="p">(</span><span class="n">pshared</span><span class="p">)</span> <span class="p">{</span> <span class="n">errno</span> <span class="o">=</span> <span class="n">ENOSYS</span> <span class="cm">/* &#39;Not implemented&#39;*/</span><span class="p">;</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;}</span>
+<pre class="highlight"><code class="language-C">int sem_init(sem_t *s, int pshared, int value) {
+  if (pshared) { errno = ENOSYS /* 'Not implemented'*/; return -1;}
 
-  <span class="n">s</span><span class="o">-&gt;</span><span class="n">count</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
-  <span class="n">pthread_mutex_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="o">-&gt;</span><span class="n">m</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-  <span class="n">pthread_cond_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="o">-&gt;</span><span class="n">cv</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+  s-&gt;count = value;
+  pthread_mutex_init(&amp;s-&gt;m, NULL);
+  pthread_cond_init(&amp;s-&gt;cv, NULL);
+  return 0;
+}</code></pre>
 
 
 <p>Our implementation of <code>sem_post</code> needs to increment the count.<br />
 We will also wake up any threads sleeping inside the condition variable.<br />
 Notice we lock and unlock the mutex so only one thread can be inside the critical section at a time.</p>
-<div class="highlight"><pre><span class="n">sem_post</span><span class="p">(</span><span class="kt">sem_t</span> <span class="o">*</span><span class="n">s</span><span class="p">)</span> <span class="p">{</span>
-  <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="o">-&gt;</span><span class="n">m</span><span class="p">);</span>
-  <span class="n">s</span><span class="o">-&gt;</span><span class="n">count</span><span class="o">++</span><span class="p">;</span>
-  <span class="n">pthread_cond_signal</span><span class="p">(</span><span class="n">s</span><span class="o">-&gt;</span><span class="n">cv</span><span class="p">);</span> <span class="cm">/* See note */</span>
-  <span class="cm">/* A woken thread must acquire the lock, so it will also have to wait until we call unlock*/</span>
+<pre class="highlight"><code class="language-C">sem_post(sem_t *s) {
+  pthread_mutex_lock(&amp;s-&gt;m);
+  s-&gt;count++;
+  pthread_cond_signal(s-&gt;cv); /* See note */
+  /* A woken thread must acquire the lock, so it will also have to wait until we call unlock*/
 
-  <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="o">-&gt;</span><span class="n">m</span><span class="p">);</span>
-<span class="p">}</span>
-</pre></div>
+  pthread_mutex_unlock(&amp;s-&gt;m);
+}</code></pre>
 
 
 <p>Our implementation of <code>sem_wait</code> may need to sleep if the semaphore's count is zero.<br />
 Just like <code>sem_post</code> we wrap the critical section using the lock (so only one thread can be executing our code at a time). Notice if the thread does need to wait then the mutex will be unlocked, allowing another thread to enter <code>sem_post</code> and waken us from our sleep!</p>
 <p>Notice that even if a thread is woken up, before it returns from  <code>pthread_cond_wait</code> it must re-acquire the lock, so it will have to wait a little bit more (e.g. until sem_post finishes). </p>
-<div class="highlight"><pre><span class="n">sem_wait</span><span class="p">(</span><span class="kt">sem_t</span> <span class="o">*</span><span class="n">s</span><span class="p">)</span> <span class="p">{</span>
-  <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="o">-&gt;</span><span class="n">m</span><span class="p">);</span>
-  <span class="k">while</span> <span class="p">(</span><span class="n">s</span><span class="o">-&gt;</span><span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-      <span class="n">pthread_cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="o">-&gt;</span><span class="n">cv</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">s</span><span class="o">-&gt;</span><span class="n">m</span><span class="p">);</span> <span class="cm">/*unlock mutex, wait, relock mutex*/</span>
-  <span class="p">}</span>
-  <span class="n">s</span><span class="o">-&gt;</span><span class="n">count</span><span class="o">--</span><span class="p">;</span>
-  <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="o">-&gt;</span><span class="n">m</span><span class="p">);</span>
-<span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">sem_wait(sem_t *s) {
+  pthread_mutex_lock(&amp;s-&gt;m);
+  while (s-&gt;count == 0) {
+      pthread_cond_wait(&amp;s-&gt;cv, &amp;s-&gt;m); /*unlock mutex, wait, relock mutex*/
+  }
+  s-&gt;count--;
+  pthread_mutex_unlock(&amp;s-&gt;m);
+}</code></pre>
 
 
 <p>Wait <code>sem_post</code> keeps calling <code>pthread_cond_signal</code> won't that break sem_wait? <br />
 Answer: No! We can't get past the loop until the count is non-zero. In practice this means <code>sem_post</code> would unnecessary call <code>pthread_cond_signal</code> even if there are no waiting threads. A more efficient implementation would only call <code>pthread_cond_signal</code> when necessary i.e.</p>
-<div class="highlight"><pre>  <span class="cm">/* Did we increment from zero to one- time to signal a thread sleeping inside sem_post */</span>
-  <span class="k">if</span> <span class="p">(</span><span class="n">s</span><span class="o">-&gt;</span><span class="n">count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="cm">/* Wake up one waiting thread!*/</span>
-     <span class="n">pthread_cond_signal</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="o">-&gt;</span><span class="n">cv</span><span class="p">);</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">  /* Did we increment from zero to one- time to signal a thread sleeping inside sem_post */
+  if (s-&gt;count == 1) /* Wake up one waiting thread!*/
+     pthread_cond_signal(&amp;s-&gt;cv);</code></pre>
 
 
 <h2>Other semaphore considerations</h2>

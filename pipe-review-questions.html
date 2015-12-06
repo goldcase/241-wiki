@@ -71,26 +71,25 @@
 </blockquote>
 <h2>Q1</h2>
 <p>Fill in the blanks to make the following program print 123456789. If <code>cat</code> is given no arguments it simply prints its input until EOF. Bonus: Explain why the <code>close</code> call below is necessary.</p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-  <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-  <span class="k">while</span><span class="p">(</span><span class="o">++</span><span class="n">i</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kt">pid_t</span> <span class="n">pid</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="cm">/* child */</span>
-      <span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">16</span><span class="p">];</span>
-      <span class="n">sprintf</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">______</span><span class="p">,</span><span class="n">i</span><span class="p">);</span>
-      <span class="kt">int</span> <span class="n">fds</span><span class="p">[</span> <span class="n">______</span><span class="p">];</span>
-      <span class="n">pipe</span><span class="p">(</span> <span class="n">fds</span><span class="p">);</span>
-      <span class="n">write</span><span class="p">(</span> <span class="n">fds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">______</span><span class="p">,</span><span class="n">______</span> <span class="p">);</span> <span class="c1">// Write the buffer into the pipe</span>
-      <span class="n">close</span><span class="p">(</span>  <span class="n">______</span> <span class="p">);</span>
-      <span class="n">dup2</span><span class="p">(</span> <span class="n">fds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="n">______</span><span class="p">);</span>
-      <span class="n">execlp</span><span class="p">(</span> <span class="s">&quot;cat&quot;</span><span class="p">,</span> <span class="s">&quot;cat&quot;</span><span class="p">,</span>  <span class="n">______</span> <span class="p">);</span>
-      <span class="n">perror</span><span class="p">(</span><span class="s">&quot;exec&quot;</span><span class="p">);</span> <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="n">waitpid</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-  <span class="p">}</span>
-  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">int main() {
+  int i = 0;
+  while(++i &lt; 10) {
+    pid_t pid = fork();
+    if(pid == 0) { /* child */
+      char buffer[16];
+      sprintf(buffer, ______,i);
+      int fds[ ______];
+      pipe( fds);
+      write( fds[1], ______,______ ); // Write the buffer into the pipe
+      close(  ______ );
+      dup2( fds[0],  ______);
+      execlp( &quot;cat&quot;, &quot;cat&quot;,  ______ );
+      perror(&quot;exec&quot;); exit(1);
+    }
+    waitpid(pid, NULL, 0);
+  }
+  return 0;
+}</code></pre>
 
 
 <h2>Q2</h2>

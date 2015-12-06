@@ -69,16 +69,14 @@
 <h2>What is the Critical Section Problem?</h2>
 <p>As already discussed in [[Synchronization, Part 3: Working with Mutexes And Semaphores]], there are critical parts of our code that can only be executed by one thread at a time. We describe this requirement as 'mutual exclusion'; only one thread (or process) may have access to the shared resource.</p>
 <p>In multi-threaded programs we can wrap a critical section with mutex lock and unlock calls:</p>
-<div class="highlight"><pre><span class="n">pthread_mutex_lock</span><span class="p">()</span> <span class="o">-</span> <span class="n">one</span> <span class="kr">thread</span> <span class="n">allowed</span> <span class="n">at</span> <span class="n">a</span> <span class="n">time</span><span class="o">!</span> <span class="p">(</span><span class="n">others</span> <span class="n">will</span> <span class="n">have</span> <span class="n">to</span> <span class="n">wait</span> <span class="n">here</span><span class="p">)</span>
-<span class="p">...</span> <span class="n">Do</span> <span class="n">Critical</span> <span class="n">Section</span> <span class="n">stuff</span> <span class="n">here</span><span class="o">!</span>
-<span class="n">pthread_mutex_unlock</span><span class="p">()</span> <span class="o">-</span> <span class="n">let</span> <span class="n">other</span> <span class="n">waiting</span> <span class="n">threads</span> <span class="k">continue</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">pthread_mutex_lock() - one thread allowed at a time! (others will have to wait here)
+... Do Critical Section stuff here!
+pthread_mutex_unlock() - let other waiting threads continue</code></pre>
 
 
 <p>How would we implement these lock and unlock calls? Can we create an algorithm that assures mutual exclusion? An incorrect implementation is shown below, </p>
-<div class="highlight"><pre><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="kt">p_mutex_t</span> <span class="o">*</span><span class="n">m</span><span class="p">)</span>     <span class="p">{</span> <span class="k">while</span><span class="p">(</span><span class="n">m</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">)</span> <span class="p">{};</span> <span class="n">m</span><span class="o">-&gt;</span><span class="n">lock</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;}</span>
-<span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="kt">p_mutex_t</span> <span class="o">*</span><span class="n">m</span><span class="p">)</span>   <span class="p">{</span> <span class="n">m</span><span class="o">-&gt;</span><span class="n">lock</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">pthread_mutex_lock(p_mutex_t *m)     { while(m-&gt;lock) {}; m-&gt;lock = 1;}
+pthread_mutex_unlock(p_mutex_t *m)   { m-&gt;lock = 0; }</code></pre>
 
 
 <p>At first glance, the code appears to work; if one thread attempts to locks the mutex, a later thread must wait until the lock is cleared. However this implementation <em>does not satisfy Mutual Exclusion</em>. Let's take a close look at this 'implementation' from the point of view of two threads running around the same time. In the table below times runs from top to bottom-</p>
@@ -118,22 +116,20 @@
 <p>Raising a flag represents a thread/process's intention to enter the critical section.</p>
 <p>Remember that the psuedo-code outlined below is part of a larger program; the thread or process will typically need to enter the critical section many times during the lifetime of the process. So imagine each example as wrapped inside a loop where for a random amount of time the thread or process is working on something else.</p>
 <p>Is there anything wrong with candidate solution described below?</p>
-<div class="highlight"><pre>// Candidate #1
+<pre class="highlight"><code>// Candidate #1
 wait until your flag is lowered
 raise my flag
 // Do Critical Section stuff
-lower my flag 
-</pre></div>
+lower my flag </code></pre>
 
 
 <p>Answer: Candidate solution #1 also suffers a race condition i.e. it does not satisfy Mutual Exclusion because both threads/processes could read each other's flag value (=lowered) and continue. </p>
 <p>This suggests we should raise the flag <em>before</em> checking the other thread's flag - which is candidate solution #2 below.</p>
-<div class="highlight"><pre>// Candidate #2
+<pre class="highlight"><code>// Candidate #2
 raise my flag
 wait until your flag is lowered
 // Do Critical Section stuff
-lower my flag 
-</pre></div>
+lower my flag </code></pre>
 
 
 <p>Candidate #2 satisfies mutual exclusion - it is impossible for two threads to be inside the critical section at the same time. However this code suffers from deadlock! Suppose two threads wish to enter the critical section at the same time:</p>
@@ -171,11 +167,10 @@ lower my flag
 <p>This suggests we should use a turn-based variable to try to resolve who should proceed. </p>
 <h2>Turn-based solutions</h2>
 <p>The following candidate solution #3 uses a turn-based variable to politely allow one thread and then the other to continue</p>
-<div class="highlight"><pre>// Candidate #3
+<pre class="highlight"><code>// Candidate #3
 wait until my turn is myid
 // Do Critical Section stuff
-turn = yourid
-</pre></div>
+turn = yourid</code></pre>
 
 
 <p>Candidate #3 satisfies mutual exclusion (each thread or process gets exclusive access to the Critical Section), however both threads/processes must take a strict turn-based approach to using the critical section; i.e. they are forced into an alternating critical section access pattern. For example, if thread 1 wishes to read a hashtable every millisecond but another thread writes to a hashtable every second, then the reading thread would have to wait another 999ms before being able to read from the hashtable again. This 'solution' is not effective, because our threads should be able to make progress and enter the critical section if no other thread is currently in the critical section.</p>
@@ -187,13 +182,12 @@ turn = yourid
 <p>With these ideas in mind let's examine another candidate solution that uses a turn-based flag only if two threads both required access at the same time.</p>
 <h2>Turn and Flag solutions</h2>
 <p>Is the following a correct solution to CSP?</p>
-<div class="highlight"><pre>\\ Candidate #4
+<pre class="highlight"><code>\\ Candidate #4
 raise my flag
 if your flag is raised, wait until my turn
 // Do Critical Section stuff
 turn = yourid
-lower my flag
-</pre></div>
+lower my flag</code></pre>
 
 
 <p>One instructor and another CS faculty member initially thought so! However, analyzing these solutions is tricky. Even peer-reviewed papers on this specific subject contain incorrect solutions! At first glance it appears to satisfy Mutual Exclusion, Bounded Wait and Progress: The turn-based flag is only used in the event of a tie (so Progress and Bounded Wait is allowed) and mutual exclusion appears to be satisfied. However.... Perhaps you can find a counter-example?</p>
@@ -237,13 +231,12 @@ lower my flag
 </table>
 <h2>What is Peterson's solution?</h2>
 <p>Peterson published his novel and surprisingly simple solution in a 2 page paper in 1981. A version of his algorithm is shown below that uses a shared variable <code>turn</code>: </p>
-<div class="highlight"><pre>\\ Candidate #5
+<pre class="highlight"><code>\\ Candidate #5
 raise my flag
 turn = myid
 wait until your flag is lowered or turn is yourid
 // Do Critical Section stuff
-lower my flag
-</pre></div>
+lower my flag</code></pre>
 
 
 <p>This solution satisfies Mutual Exclusion, Bounded Wait and Progress. If thread #2 has set turn to 2 and is currently inside the critical section. Thread #1 arrives, <em>sets the turn back to 1</em> and now waits until thread 2 lowers the flag.</p>
@@ -251,16 +244,15 @@ lower my flag
 <a href="http://dl.acm.org/citation.cfm?id=945527">G. L. Peterson: "Myths About the Mutual Exclusion Problem", Information Processing Letters 12(3) 1981, 115–116</a></p>
 <h2>Was Peterson's solution the first solution?</h2>
 <p>No, Dekkers Algorithm (1962) was the first provably correct solution. A version of the algorithm is below.</p>
-<div class="highlight"><pre>raise my flag
+<pre class="highlight"><code>raise my flag
 while(your flag is raised) :
-   if it&#39;s your turn to win :
+   if it's your turn to win :
      lower my flag
      wait while your turn
      raise my flag
 // Do Critical Section stuff
 set your turn to win
-lower my flag
-</pre></div>
+lower my flag</code></pre>
 
 
 <p>Notice how the process's flag is always raised during the critical section no matter if the loop is iterated zero, once or more times. Further the flag can be interpreted as an immediate intent to enter the critical section. Only if the other process has also raised the flag will one process defer, lower their intent flag and wait.</p>
@@ -270,8 +262,7 @@ lower my flag
 <p>However in general, CPUs and C compilers can re-order CPU instructions or use CPU-core-specific local cache values that are stale if another core updates the shared variables. Thus a simple pseudo-code to C implementation is too naive for most platforms. You can stop reading now.</p>
 <p>Oh... you decided to keep reading. Well, here be dragons! Don't say we didn't warn you. Consider this advanced and gnarly topic but (spoiler alert) a happy ending.</p>
 <p>Consider the following code,</p>
-<div class="highlight"><pre><span class="k">while</span><span class="p">(</span><span class="n">flag2</span> <span class="p">)</span> <span class="p">{</span> <span class="cm">/* busy loop - go around again */</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">while(flag2 ) { /* busy loop - go around again */</code></pre>
 
 
 <p>An efficient compiler would infer that <code>flag2</code> variable is never changed inside the loop, so that test can be optimized to <code>while(true)</code> <br />

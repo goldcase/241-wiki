@@ -144,13 +144,12 @@ accept<br />
 <h1>Coding questions</h1>
 <h2>Q 2.1</h2>
 <p>Writing to a network socket may not send all of the bytes and may be interrupted due to a signal. Check the return value of <code>write</code> to implement <code>write_all</code> that will repeatedly call <code>write</code> with any remaining data. If <code>write</code> returns -1 then immediately return -1 unless the <code>errno</code> is <code>EINTR</code> - in which case repeat the last <code>write</code> attempt. You will need to use pointer arithmetic.</p>
-<div class="highlight"><pre><span class="c1">// Returns -1 if write fails (unless EINTR in which case it recalls write</span>
-<span class="c1">// Repeated calls write until all of the buffer is written.</span>
-<span class="kt">ssize_t</span> <span class="nf">write_all</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">nbyte</span><span class="p">)</span> <span class="p">{</span>
-  <span class="kt">ssize_t</span> <span class="n">nb</span> <span class="o">=</span> <span class="n">write</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="n">nbyte</span><span class="p">);</span>
-  <span class="k">return</span> <span class="n">nb</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+<pre class="highlight"><code class="language-C">// Returns -1 if write fails (unless EINTR in which case it recalls write
+// Repeated calls write until all of the buffer is written.
+ssize_t write_all(int fd, const char *buf, size_t nbyte) {
+  ssize_t nb = write(fd, buf, nbyte);
+  return nb;
+}</code></pre>
 
 
 <h2>Q 2.2</h2>

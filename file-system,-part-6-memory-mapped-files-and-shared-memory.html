@@ -76,54 +76,52 @@ If many programs only need read-access to the same file (e.g. /bin/bash, the C l
 </em> We seek to our desired size and write one byte to ensure that the file is sufficient length<br />
 * When finished call munmap to unmap the file from memory.</p>
 <p>This example also shows the preprocessor constants "<strong>LINE</strong>" and "<strong>FILE</strong>" that hold the current line number and filename of the file currently being compiled.</p>
-<div class="highlight"><pre><span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;sys/types.h&gt;</span>
-<span class="cp">#include &lt;sys/stat.h&gt;</span>
-<span class="cp">#include &lt;sys/mman.h&gt;</span>
-<span class="cp">#include &lt;fcntl.h&gt;</span>
-<span class="cp">#include &lt;unistd.h&gt;</span>
-<span class="cp">#include &lt;errno.h&gt;</span>
-<span class="cp">#include &lt;string.h&gt;</span>
+<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+#include &lt;sys/mman.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;string.h&gt;
 
 
-<span class="kt">int</span> <span class="nf">fail</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">filename</span><span class="p">,</span> <span class="kt">int</span> <span class="n">linenumber</span><span class="p">)</span> <span class="p">{</span> 
-  <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;%s:%d %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">linenumber</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span> 
-  <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="cm">/*Make compiler happy */</span>
-<span class="p">}</span>
-<span class="cp">#define QUIT fail(__FILE__, __LINE__ )</span>
+int fail(char *filename, int linenumber) { 
+  fprintf(stderr, &quot;%s:%d %s\n&quot;, filename, linenumber, strerror(errno)); 
+  exit(1);
+  return 0; /*Make compiler happy */
+}
+#define QUIT fail(__FILE__, __LINE__ )
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-  <span class="c1">// We want a file big enough to hold 10 integers  </span>
-  <span class="kt">int</span> <span class="n">size</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span><span class="p">;</span>
+int main() {
+  // We want a file big enough to hold 10 integers  
+  int size = sizeof(int) * 10;
 
-  <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="s">&quot;data&quot;</span><span class="p">,</span> <span class="n">O_RDWR</span> <span class="o">|</span> <span class="n">O_CREAT</span> <span class="o">|</span> <span class="n">O_TRUNC</span><span class="p">,</span> <span class="mo">0600</span><span class="p">);</span> <span class="c1">//6 = read+write for me!</span>
+  int fd = open(&quot;data&quot;, O_RDWR | O_CREAT | O_TRUNC, 0600); //6 = read+write for me!
 
-  <span class="n">lseek</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">SEEK_SET</span><span class="p">);</span>
-  <span class="n">write</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="s">&quot;A&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+  lseek(fd, size, SEEK_SET);
+  write(fd, &quot;A&quot;, 1);
 
-  <span class="kt">void</span> <span class="o">*</span><span class="n">addr</span> <span class="o">=</span> <span class="n">mmap</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">PROT_READ</span> <span class="o">|</span> <span class="n">PROT_WRITE</span><span class="p">,</span> <span class="n">MAP_SHARED</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Mapped at %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">addr</span><span class="p">);</span>
-  <span class="k">if</span> <span class="p">(</span><span class="n">addr</span> <span class="o">==</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="o">-</span><span class="mi">1</span> <span class="p">)</span> <span class="n">QUIT</span><span class="p">;</span>
+  void *addr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  printf(&quot;Mapped at %p\n&quot;, addr);
+  if (addr == (void*) -1 ) QUIT;
 
-  <span class="kt">int</span> <span class="o">*</span><span class="n">array</span> <span class="o">=</span> <span class="n">addr</span><span class="p">;</span>
-  <span class="n">array</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0x12345678</span><span class="p">;</span>
-  <span class="n">array</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0xdeadc0de</span><span class="p">;</span>
+  int *array = addr;
+  array[0] = 0x12345678;
+  array[1] = 0xdeadc0de;
 
-  <span class="n">munmap</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span><span class="n">size</span><span class="p">);</span>
-  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+  munmap(addr,size);
+  return 0;
 
-<span class="p">}</span>
-</pre></div>
+}</code></pre>
 
 
 <p>The contents of our binary file can be listed using hexdump</p>
-<div class="highlight"><pre>$ hexdump data
+<pre class="highlight"><code>$ hexdump data
 0000000 78 56 34 12 de c0 ad de 00 00 00 00 00 00 00 00
 0000010 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-0000020 00 00 00 00 00 00 00 00 41   
-</pre></div>
+0000020 00 00 00 00 00 00 00 00 41   </code></pre>
 
 
 <p>The careful reader may notice that our integers were written in least-significant-byte format (because that is the endianess of the CPU) and that we allocated a file that is one byte too many!</p>
@@ -135,36 +133,35 @@ Sharing of files - memory mapped files are particularly efficient when the same 
 <p>Note for simple sequential processing memory mapped files are not necessarily faster than standard 'stream-based' approaches of <code>read</code> / fscanf etc. </p>
 <h2>How do I share memory between a parent and child process?</h2>
 <p>Easy -  Use <code>mmap</code> without a file - just specify the MAP_ANONYMOUS and MAP_SHARED options!</p>
-<div class="highlight"><pre><span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;sys/types.h&gt;</span>
-<span class="cp">#include &lt;sys/stat.h&gt;</span>
-<span class="cp">#include &lt;sys/mman.h&gt; </span><span class="cm">/* mmap() is defined in this header */</span><span class="cp"></span>
-<span class="cp">#include &lt;fcntl.h&gt;</span>
-<span class="cp">#include &lt;unistd.h&gt;</span>
-<span class="cp">#include &lt;errno.h&gt;</span>
-<span class="cp">#include &lt;string.h&gt;</span>
+<pre class="highlight"><code class="language-C">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+#include &lt;sys/mman.h&gt; /* mmap() is defined in this header */
+#include &lt;fcntl.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;string.h&gt;
 
-<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+int main() {
 
-  <span class="kt">int</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>  
-  <span class="kt">void</span> <span class="o">*</span><span class="n">addr</span> <span class="o">=</span> <span class="n">mmap</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">PROT_READ</span> <span class="o">|</span> <span class="n">PROT_WRITE</span><span class="p">,</span> <span class="n">MAP_SHARED</span> <span class="o">|</span> <span class="n">MAP_ANONYMOUS</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
-  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Mapped at %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">addr</span><span class="p">);</span>
+  int size = 100 * sizeof(int);  
+  void *addr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+  printf(&quot;Mapped at %p\n&quot;, addr);
 
-  <span class="kt">int</span> <span class="o">*</span><span class="n">shared</span> <span class="o">=</span> <span class="n">addr</span><span class="p">;</span>
-  <span class="kt">pid_t</span> <span class="n">mychild</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
-  <span class="k">if</span> <span class="p">(</span><span class="n">mychild</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">shared</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
-    <span class="n">shared</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span><span class="p">;</span>
-  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-    <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// We will talk about synchronization later</span>
-    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">shared</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">shared</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-  <span class="p">}</span>
+  int *shared = addr;
+  pid_t mychild = fork();
+  if (mychild &gt; 0) {
+    shared[0] = 10;
+    shared[1] = 20;
+  } else {
+    sleep(1); // We will talk about synchronization later
+    printf(&quot;%d\n&quot;, shared[1] + shared[0]);
+  }
 
-  <span class="n">munmap</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span><span class="n">size</span><span class="p">);</span>
-  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
+  munmap(addr,size);
+  return 0;
+}</code></pre>
 
 
 <h2>Can I use shared memory for IPC ?</h2>

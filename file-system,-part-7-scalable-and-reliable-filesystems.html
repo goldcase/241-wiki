@@ -89,12 +89,11 @@ However, not all operating systems honor this request and even if the data is ev
 <p>One disadvantage of RAID-3 is that whenever a disk block is written, the parity block will always be written too.</p>
 <h2>How secure is RAID-3 to data-loss?</h2>
 <p>A single disk failure will not result in data loss (because there is sufficient data to rebuild the array from the remaining disks). Data-loss will occur when a two disks are unusable because there is no longer sufficient data to rebuild the array. We can calculate the probability of a two disk failure based on the repair time which includes not just the time to insert a new disk but the time required to rebuild the entire contents of the array.</p>
-<div class="highlight"><pre>MTTF = mean time to failure
+<pre class="highlight"><code>MTTF = mean time to failure
 MTTR = mean time to repair
 N = number of original disks
 
-p = MTTR / (MTTF-one-disk / (N-1))
-</pre></div>
+p = MTTR / (MTTF-one-disk / (N-1))</code></pre>
 
 
 <p>Using typical numbers (MTTR=1day, MTTF=1000days, N-1 = 9,, p=0.009</p>
