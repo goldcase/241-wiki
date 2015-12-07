@@ -9,7 +9,8 @@ TAIL_FILE = "tail.html"
 
 cur_dir = os.path.dirname(__file__)
 md_dir = os.path.join(cur_dir, "md-files")
-output_dir = os.path.join(cur_dir, "gh-pages")
+#output_dir = os.path.join(cur_dir, "gh-pages")
+output_dir = os.path.join(cur_dir, "sys-gh-pages")
 
 # Get all markdown files in md-dir.
 files = [f for f in os.listdir(md_dir) if os.path.isfile(os.path.join(md_dir, f)) if f.endswith(".md")]
