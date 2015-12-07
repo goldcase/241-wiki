@@ -9,7 +9,7 @@ while True:
     os.chdir(os.pardir)
     os.system("python md.py")
     sleep(5)
-    os.chdir("gh-pages")
+    os.chdir("sys-gh-pages")
     os.system("git add --all .")
     sleep(5)
     os.system("git commit -m 'Detected change at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ".'")
